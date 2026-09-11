@@ -95,6 +95,7 @@
       text(card.secondary, 64, 410, 34, '#0b0e10');
       text(card.date, 64, 483, 25, '#657078');
       text('✦ starboard.', 64, 564, 33, '#0b0e10');
+      if (data.origin) text(new URL(data.origin).host + card.path, 365, 564, 21, '#657078', 750);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       if (!blob) throw new Error('Image unavailable');
       const url = URL.createObjectURL(blob), link = document.createElement('a');

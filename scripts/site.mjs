@@ -1,3 +1,5 @@
+import { milestoneEvents, reports } from './milestones.mjs';
+import { milestonePage, milestoneProgress, portfolioMilestones, reportsPage, reportPage, joinPage, announcementHistory } from './playbook-pages.mjs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { JSDOM } from 'jsdom';
@@ -25,8 +27,8 @@ export function siteOrigin(value) {
   return url.origin;
 }
 
-export async function generateSite({ snapshot, template, outDir, origin = null, history = [], asOf = snapshot.fetched_at }) {
-  const engagement = engagementData(snapshot, history, origin, asOf);
+export async function generateSite({ snapshot, template, outDir, origin = null, history = [], ledger = [], asOf = snapshot.fetched_at }) {
+  const engagement = { ...engagementData(snapshot, history, origin, asOf), events: milestoneEvents(history, snapshot), reports: reports(history, snapshot, asOf) };
   const developers = snapshot.developers.filter(d => d.repos.length).sort((a, b) => b.total_stars - a.total_stars || a.login.localeCompare(b.login));
   const projects = developers.flatMap(owner => owner.repos.map(repo => ({ ...repo, owner }))).sort(byStars);
   const languageGroups = new Map();
@@ -63,7 +65,7 @@ export async function generateSite({ snapshot, template, outDir, origin = null, 
   async function page({ path, title, description, body, crumbs = [], profile = null, schema = null, index = true, social = null }) {
     if (profile) {
       const ranked = engagement.profiles.find(person => person.id === profile.id);
-      body = body.replace('<section id="profile-claim"', profileCompetition(ranked, engagement) + '<section id="profile-claim"');
+      body = body.replace('<section id="profile-claim"', profileCompetition(ranked, engagement) + portfolioMilestones(profile, engagement.events) + '<section id="profile-claim"');
       social = socialPayload(engagement, [ranked]);
     }
     const filename = path === '/404.html' ? '404.html' : path.slice(1) + 'index.html';
@@ -93,7 +95,7 @@ export async function generateSite({ snapshot, template, outDir, origin = null, 
   routes.push({ path: '/', lastmod: snapshot.fetched_at, index: true });
   shell.window.close();
 
-  for (const specification of [competitionPage(engagement.week), competitionPage(engagement.month), followingPage(), storiesPage(engagement)]) {
+  for (const specification of [competitionPage(engagement.week), competitionPage(engagement.month), followingPage(), storiesPage(engagement), milestonePage(engagement.events), reportsPage(engagement.reports), ...engagement.reports.map(reportPage), joinPage(), announcementHistory(ledger)]) {
     await page({ ...specification, social: socialPayload(engagement) });
   }
 
@@ -121,7 +123,7 @@ export async function generateSite({ snapshot, template, outDir, origin = null, 
     try { const url = new URL(repo.homepage); if (['http:', 'https:'].includes(url.protocol) && !url.username && !url.password) homepage = url.href; } catch {}
     await page({ path: projectPath(repo.full_name), title: `${repo.full_name} — GitHub stars, project & developer | Starboard`, description: `${repo.full_name}: ${number(repo.stargazers_count)} GitHub stars, ${number(repo.forks_count)} forks, ${repo.license.spdx_id} license. ${(repo.description || 'Explore this open source project and its account owner.').slice(0, 120)}`, crumbs: [['Projects', '/projects/'], [repo.full_name]],
       schema: { '@type': 'SoftwareSourceCode', name: repo.full_name, description: repo.description || undefined, codeRepository: repo.html_url, programmingLanguage: repo.language || undefined, license: `https://spdx.org/licenses/${encodeURIComponent(repo.license.spdx_id)}.html`, url: origin + projectPath(repo.full_name) },
-      body: `<div class="page-intro"><span class="eyebrow">OPEN SOURCE PROJECT${repo.archived ? ' · ARCHIVED' : ''}</span><h1>${escape(repo.name)}</h1><p class="project-attribution">Owned on GitHub by <a href="${developerPath(d.login)}">@${escape(d.login)} →</a></p><p class="project-description">${escape(repo.description || 'No description provided on GitHub.')}</p><div class="profile-actions"><a class="profile-button claim-primary" href="${escape(repo.html_url)}" target="_blank" rel="noopener noreferrer">View repository on GitHub ↗</a>${homepage ? `<a class="profile-button" href="${escape(homepage)}" target="_blank" rel="noopener noreferrer nofollow">Project website ↗</a>` : ''}</div></div>${stats([['All-time stars', number(repo.stargazers_count)], ['Forks', number(repo.forks_count)], ['License', repo.license.spdx_id], ['Status', repo.archived ? 'Archived' : 'Not archived']])}<section class="page-section"><h2>About this repository</h2><dl class="project-facts"><div><dt>Primary language</dt><dd>${languageLink(repo.language)}</dd></div><div><dt>Created on GitHub</dt><dd>${date(repo.created_at)}</dd></div><div><dt>Last push</dt><dd>${date(repo.pushed_at)}</dd></div><div><dt>Repository</dt><dd>${escape(repo.full_name)}</dd></div></dl>${repo.topics?.length ? `<ul class="topic-list" aria-label="GitHub topics">${repo.topics.map(topic => `<li>${escape(topic)}</li>`).join('')}</ul>` : ''}<p class="page-note">Last push describes repository activity. It does not measure star growth or confirm ongoing maintenance.</p></section>${related.length ? `<section class="page-section"><div class="section-heading"><h2>More projects from @${escape(d.login)}</h2><a href="${developerPath(d.login)}">View developer →</a></div><div class="projects">${related.map(card).join('')}</div></section>` : ''}${provenance(d.fetched_at)}` });
+      body: `<div class="page-intro"><span class="eyebrow">OPEN SOURCE PROJECT${repo.archived ? ' · ARCHIVED' : ''}</span><h1>${escape(repo.name)}</h1><p class="project-attribution">Owned on GitHub by <a href="${developerPath(d.login)}">@${escape(d.login)} →</a></p><p class="project-description">${escape(repo.description || 'No description provided on GitHub.')}</p><div class="profile-actions"><a class="profile-button claim-primary" href="${escape(repo.html_url)}" target="_blank" rel="noopener noreferrer">View repository on GitHub ↗</a>${homepage ? `<a class="profile-button" href="${escape(homepage)}" target="_blank" rel="noopener noreferrer nofollow">Project website ↗</a>` : ''}</div></div>${stats([['All-time stars', number(repo.stargazers_count)], ['Forks', number(repo.forks_count)], ['License', repo.license.spdx_id], ['Status', repo.archived ? 'Archived' : 'Not archived']])}${milestoneProgress(repo)}<section class="page-section"><h2>About this repository</h2><dl class="project-facts"><div><dt>Primary language</dt><dd>${languageLink(repo.language)}</dd></div><div><dt>Created on GitHub</dt><dd>${date(repo.created_at)}</dd></div><div><dt>Last push</dt><dd>${date(repo.pushed_at)}</dd></div><div><dt>Repository</dt><dd>${escape(repo.full_name)}</dd></div></dl>${repo.topics?.length ? `<ul class="topic-list" aria-label="GitHub topics">${repo.topics.map(topic => `<li>${escape(topic)}</li>`).join('')}</ul>` : ''}<p class="page-note">Last push describes repository activity. It does not measure star growth or confirm ongoing maintenance.</p></section>${related.length ? `<section class="page-section"><div class="section-heading"><h2>More projects from @${escape(d.login)}</h2><a href="${developerPath(d.login)}">View developer →</a></div><div class="projects">${related.map(card).join('')}</div></section>` : ''}${provenance(d.fetched_at)}` });
   }
 
   await page({ path: '/languages/', title: 'Open source projects by programming language — Starboard', description: 'Explore programming languages, their open source projects, and developers in the Starboard GitHub sample. Compare all-time stars within each language.', crumbs: [['Languages']], body: `<div class="page-intro"><span class="eyebrow">FIND YOUR CORNER OF OPEN SOURCE</span><h1>Browse by language</h1><p>Explore collections with at least 10 projects from at least 3 developers in our sample. GitHub’s primary repository language determines each collection.</p></div><div class="language-grid">${languages.map(([name, repos]) => `<a class="language-card" href="${languagePaths.get(name)}"><h2>${escape(name)} →</h2><strong>★ ${number(stars(repos))}</strong><span>${number(repos.length)} projects · ${new Set(repos.map(r => r.owner.id)).size} developers</span></a>`).join('')}</div>${provenance()}` });

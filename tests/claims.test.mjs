@@ -8,6 +8,7 @@ const developer = { id: 123, login: 'alice', repos: [{ full_name: 'alice/tool' }
 function setup() {
   const db = new DatabaseSync(':memory:');
   db.exec(readFileSync(new URL('../migrations/0001_claims.sql', import.meta.url), 'utf8'));
+  db.exec(readFileSync(new URL('../migrations/0002_portfolios.sql', import.meta.url), 'utf8'));
   const owner = { id: 'user_1', externalAccounts: [{ provider: 'oauth_github', providerUserId: '123', verification: { status: 'verified' } }] };
   let user = owner;
   const env = {
@@ -65,10 +66,10 @@ test('a Clerk user cannot claim multiple GitHub identities', async () => {
 });
 test('owner edits persist, including clearing fields', async () => {
   const s = setup(); await s.call('POST');
-  const edits = { bio: '  I build tools.  ', website: 'https://example.com', featuredProjects: ['alice/tool'] };
+  const edits = { bio: '  I build tools.  ', story: '  A longer builder story.\nWith a second paragraph.  ', website: 'https://example.com', featuredProjects: ['alice/tool'] };
   assert.equal((await s.call('PATCH', edits)).status, 200);
   const saved = (await s.call()).body;
-  assert.equal(saved.bio, 'I build tools.'); assert.deepEqual(saved.featuredProjects, ['alice/tool']);
+  assert.equal(saved.bio, 'I build tools.'); assert.equal(saved.story, edits.story.trim()); assert.deepEqual(saved.featuredProjects, ['alice/tool']);
   assert.equal((await s.call('PATCH', { bio: '', website: '', featuredProjects: [] })).status, 200);
   assert.equal((await s.call()).body.website, '');
 });
@@ -79,7 +80,7 @@ test('edit rejects forged stats, unsafe URLs, duplicate or foreign repositories'
     { ...base, stars: 100000 }, { ...base, githubUserId: '999' },
     { ...base, website: 'javascript:alert(1)' }, { ...base, website: 'https://user:pass@example.com' },
     { ...base, featuredProjects: ['other/repo'] }, { ...base, featuredProjects: ['alice/tool', 'alice/tool'] },
-    { ...base, bio: 'a'.repeat(301) }, { ...base, featuredProjects: 'alice/tool' }, null
+    { ...base, bio: 'a'.repeat(301) }, { ...base, story: 'a'.repeat(2001) }, { ...base, story: {} }, { ...base, featuredProjects: 'alice/tool' }, null
   ]) assert.equal((await s.call('PATCH', body)).status, 400);
 });
 test('unlinking GitHub removes edit access', async () => {

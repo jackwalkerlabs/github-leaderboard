@@ -99,6 +99,24 @@ test('profile and language totals reflect the actual matching repositories; unsa
   language.window.close();
 });
 
+test('completed report and milestone pages include real standings, source paths and working share cards', async t => {
+  const history = ['2026-08-31', '2026-09-07'].map((day, i) => ({ version: 1, methodology: 'personal-public-nonfork-spdx-v1', observed_at: day + 'T16:00:00Z', developers: snapshot.developers.map(d => ({ id: d.id, login: d.login, observed_at: day + 'T15:59:00Z', repos: d.repos.map(r => ({ ...r, stargazers_count: r.stargazers_count - (i ? 0 : 2) })) })) }));
+  const { read } = await fixture(t, 'https://starboard.example', history);
+  const report = new JSDOM(await read('/reports/week/2026-08-31/'));
+  assert.equal(report.window.document.querySelector('meta[name=robots]').content, 'index,follow');
+  assert.equal(report.window.document.querySelectorAll('.climb-list li').length, 3);
+  assert.match(report.window.document.querySelector('.climb-gain').textContent, /\+36/);
+  const payload = JSON.parse(report.window.document.getElementById('engagement-data').textContent);
+  assert.equal(payload.cards.find(c => c.key === 'report-week-2026-08-31').path, '/reports/week/2026-08-31/');
+  assert.match(report.window.document.querySelector('.page-provenance').textContent, /2026-08-31T16:00:00Z/);
+  report.window.close();
+  const milestones = new JSDOM(await read('/milestones/'));
+  assert.equal(milestones.window.document.querySelector('meta[name=robots]').content, 'index,follow');
+  assert.equal(milestones.window.document.querySelectorAll('.story-grid article').length, 3);
+  assert.equal(milestones.window.document.querySelector('.story-grid a').getAttribute('href'), '/projects/alice/tool-0/');
+  milestones.window.close();
+});
+
 test('previews and missing pages are noindex; canonical origin configuration is explicit', async t => {
   const { read, outDir } = await fixture(t, null);
   for (const route of ['/', '/developers/alice/', '/404.html']) {

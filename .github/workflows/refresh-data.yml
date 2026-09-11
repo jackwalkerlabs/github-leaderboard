@@ -31,12 +31,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - run: npm test
+      - name: Prepare daily social drafts when a public origin is configured
+        if: vars.SITE_URL != ''
+        run: npm run posts:prepare
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
       - run: npm run build
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
       - name: Save refreshed data
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add dist/data.json data/history/
+          git add dist/data.json data/history/ data/announcements.json
           if git diff --cached --quiet; then exit 0; fi
           git commit -m 'Refresh GitHub snapshot and daily history'
           git push

@@ -67,6 +67,7 @@ test('claim editor saves selected projects and escapes public bio', async () => 
   s.document.getElementById('claim-profile').click(); await tick();
   const form = s.document.getElementById('profile-editor');
   form.querySelector('textarea').value = '<img src=x onerror=alert(1)> My projects';
+  form.querySelector('[name=story]').value = '<script>unsafe</script> My builder story';
   form.querySelector('[name=website]').value = 'https://example.com';
   form.querySelector('[name=featured]').checked = true;
   form.dispatchEvent(new s.w.Event('submit', { cancelable: true })); await tick();
@@ -74,6 +75,8 @@ test('claim editor saves selected projects and escapes public bio', async () => 
   assert.equal(s.document.querySelector('.curated-bio img'), null);
   assert.match(s.document.querySelector('.curated-bio').textContent, /<img/);
   assert.equal(s.document.querySelectorAll('.featured-projects a').length, 1);
+  assert.equal(s.document.querySelector('.builder-story script'), null);
+  assert.match(s.document.querySelector('.builder-story').textContent, /My builder story/);
   assert.equal(s.calls.find(([, opts]) => opts?.method === 'PATCH')[1].headers.Authorization, 'Bearer test-token');
   s.close();
 });

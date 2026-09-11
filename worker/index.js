@@ -1,3 +1,4 @@
+import { listingRequest } from './listings.js';
 import { createClerkClient } from '@clerk/backend';
 import { HttpError, requireGitHubOwner, validateEdits, publicClaim } from './claims.js';
 
@@ -10,7 +11,7 @@ export async function authenticate(request, env) {
   if (!state.isAuthenticated || !auth?.userId) throw new HttpError(401, 'Sign in to claim or edit your profile.');
   return clerk.users.getUser(auth.userId);
 }
-export function createWorker({ getUser = authenticate } = {}) {
+export function createWorker({ getUser = authenticate, githubFetch = fetch } = {}) {
   return {
     async fetch(request, env) {
       const url = new URL(request.url);
@@ -20,6 +21,7 @@ export function createWorker({ getUser = authenticate } = {}) {
         if (url.pathname === '/api/config' && request.method === 'GET') {
           return json({ claimsEnabled: configured, publishableKey: configured ? env.CLERK_PUBLISHABLE_KEY : null });
         }
+        if (url.pathname === '/api/listing-request') return json(await listingRequest(request, env, getUser, githubFetch));
         const match = url.pathname.match(/^\/api\/profiles\/([a-z\d](?:[a-z\d-]{0,38}))$/i);
         if (!match) throw new HttpError(404, 'Page not found.');
         if (!['GET', 'POST', 'PATCH'].includes(request.method)) throw new HttpError(405, 'Method not allowed.');
@@ -55,8 +57,8 @@ export function createWorker({ getUser = authenticate } = {}) {
         let body;
         try { body = JSON.parse(text); } catch { throw new HttpError(400, 'Invalid profile changes.'); }
         const edits = validateEdits(body, developer);
-        await env.DB.prepare("UPDATE profile_claims SET bio = ?, website = ?, featured_projects = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE github_user_id = ? AND clerk_user_id = ?")
-          .bind(edits.bio, edits.website, JSON.stringify(edits.featuredProjects), githubId, user.id).run();
+        await env.DB.prepare("UPDATE profile_claims SET bio = ?, website = ?, featured_projects = ?, story = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE github_user_id = ? AND clerk_user_id = ?")
+          .bind(edits.bio, edits.website, JSON.stringify(edits.featuredProjects), edits.story, githubId, user.id).run();
         return json({ ...publicClaim(await read()), ownedByYou: true });
       } catch (error) {
         // Never return provider errors, tokens, or database details to the browser.

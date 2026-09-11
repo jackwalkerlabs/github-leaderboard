@@ -48,7 +48,7 @@ SITE_URL=https://your-domain.example npm run build
 
 Without `SITE_URL`, builds are previews: HTML carries `noindex,follow` and no sitemap is generated. `npm run deploy` requires `SITE_URL`. Use the same origin as Clerk/Worker `APP_ORIGIN`; do not publish a placeholder domain.
 
-Arbitrary date/filter combinations do not produce indexable routes. Current activity filters use latest push timestamps and **all-time** star counts. Competition pages stay noindex while collecting history and become indexable only when comparable standings exist. Dated reports are not generated.
+Arbitrary date/filter combinations do not produce indexable routes. Current activity filters use latest push timestamps and **all-time** star counts. Competition pages stay noindex while collecting history and become indexable only when comparable standings exist. Completed calendar-week/month reports are available under `/reports/`; reports without comparable boundary observations stay noindex.
 
 ## Competition, following, and sharing
 
@@ -64,9 +64,9 @@ The ranking and post content refresh at build time after a data refresh. Running
 
 A successful full `npm run data:refresh` also writes `data/history/YYYY-MM-DD.json`. The first complete observation of each UTC day is preserved; subsequent runs update the current snapshot without replacing that day's baseline. Partial failures, stale profiles, or missing immutable IDs cannot become a historical baseline. History is kept outside public build assets. The initial baseline is September 11, 2026.
 
-`.github/workflows/refresh-data.yml` is ready for a daily run at 06:17 UTC and manual **Run workflow**. It uses the runner's installed `gh` and repository `GITHUB_TOKEN`, tests/builds the result, then commits only current data and history. **This checkout has no Git remote, so the schedule is not active.** Push it to the default branch of the intended GitHub repository, enable Actions, and allow the bot to commit data under your branch rules. GitHub schedules can be delayed. This workflow does not deploy the Cloudflare Worker; commits made with `GITHUB_TOKEN` do not trigger ordinary push-based Actions workflows.
+`.github/workflows/refresh-data.yml` is ready for a daily run at 06:17 UTC and manual **Run workflow**. It uses the runner's installed `gh` and repository `GITHUB_TOKEN`, tests/builds the result, then commits current data, history, and the announcement ledger. When the repository variable `SITE_URL` is configured, it also prepares social drafts (never publishes them). **This checkout has no Git remote, so the schedule is not active.** Push it to the default branch of the intended GitHub repository, enable Actions, and allow the bot to commit data under your branch rules. GitHub schedules can be delayed. This workflow does not deploy the Cloudflare Worker; commits made with `GITHUB_TOKEN` do not trigger ordinary push-based Actions workflows.
 
-The competition builder compares matched repository IDs across real observations on UTC dates 7 or 30 days apart and shows actual dates and coverage. Net star-count changes can be negative and do not represent unique users. Missing baselines are never treated as zero. Historical archive awards and rank-movement notifications would need additional stored comparisons before being introduced.
+The competition builder compares matched repository IDs across real observations on UTC dates 7 or 30 days apart and shows actual dates and coverage. Net star-count changes can be negative and do not represent unique users. Missing baselines are never treated as zero. Completed-period reports preserve their historical endpoint cohort. Rank-movement notifications are not implemented.
 
 ## Enable Clerk locally
 
@@ -76,9 +76,9 @@ The competition builder compares matched repository IDs across real observations
 
 Clerk's UI and browser SDK are loaded from the Clerk Frontend API domain only when auth is configured, following the [JavaScript quickstart](https://clerk.com/docs/js-frontend/getting-started/quickstart). The Worker uses [authenticateRequest](https://clerk.com/docs/reference/backend/authenticate-request) with the configured frontend origin and only session tokens. Claims compare a verified external account's [providerUserId](https://clerk.com/docs/reference/backend/types/backend-external-account) against the snapshot's numeric GitHub user ID.
 
-Claiming permits editing a 300-character bio, an HTTPS website, and up to six featured eligible projects. These fields are stored separately from GitHub data. Stars, forks, eligibility, and ranking cannot be edited. The badge means GitHub account control was verified when claimed; it does not establish sole authorship or maintenance of every project.
+Claiming permits editing a 300-character bio, a 2,000-character builder story, an HTTPS website, and up to six featured eligible projects. These fields are stored separately from GitHub data. Stars, forks, eligibility, and ranking cannot be edited. The badge means GitHub account control was verified when claimed; it does not establish sole authorship or maintenance of every project.
 
-The database enforces one claim per GitHub account and one claim per Clerk user. Repeated claims by the same owner are safe. Every write checks the live Clerk user and their connected GitHub identity; unlinking GitHub removes edit access. Reassignment/account recovery currently requires operator intervention. New profiles outside the curated sample, organization project attribution, account-deletion cleanup, and self-service release of a claim are not implemented.
+The database enforces one claim per GitHub account and one claim per Clerk user. Repeated claims by the same owner are safe. Every write checks the live Clerk user and their connected GitHub identity; unlinking GitHub removes edit access. Reassignment/account recovery currently requires operator intervention. Instant self-service publication, organization project attribution, account-deletion cleanup, and self-service release of a claim are not implemented.
 
 ## Cloudflare deployment setup
 
@@ -101,3 +101,43 @@ Live Clerk OAuth and a remote D1 deployment still need account configuration and
 ## Shared design with UseCLIs
 
 Starboard vendors UseCLIs' font, color, typography, spacing, and radius tokens under `dist/design-system/`, including self-hosted Inconsolata and license notices. The layout uses compact ranking rows, neutral cards, dark primary buttons, and green metric accents. Secondary interest, minimum-star, and activity filters live under **More filters**; the summary indicates when any are active. Developer avatars, featured projects, and claiming retain Starboard's focus on people. The token snapshot is portable and does not require the UseCLIs checkout at build time.
+
+
+## Indie Page playbook: portfolios → milestones → discovery
+
+Research, scope and acceptance evidence live in [docs/indiepage-playbook.md](docs/indiepage-playbook.md). The adaptation keeps UseCLIs styling and uses GitHub project progress in place of revenue payments. Revenue claims from the video are not forecasts for Starboard.
+
+- `/join/` helps existing builders find their portfolio. Unlisted builders can sign in, connect a verified GitHub account, and request a listing. The Worker resolves the immutable GitHub ID against GitHub's public user API, accepts personal accounts only, and persists one request per GitHub/Clerk identity. Requests are not claims and do not instantly publish a page. Without Clerk configuration, the UI explains that requests are not yet open.
+- Owners can tell their builder story, link their website, and feature up to six eligible projects. Statistics remain read-only. Both database migrations are required.
+- `/milestones/` celebrates first **observed** project crossings at 10, 50, 100, 500, 1k and larger thresholds. Initial snapshot totals are not new achievements. Repository IDs, owner continuity, and a historical high-water mark prevent imports, transfers, missing observations, and lost/re-gained stars from creating fake milestones. The same current repo/owner must remain in the directory for a milestone card to appear. Portfolios highlight three non-archived projects closest to their next threshold; project pages show progress too.
+- `/reports/` links completed calendar weeks (Monday–Sunday UTC) and months. Routes use `/reports/week/YYYY-MM-DD/` and `/reports/month/YYYY-MM-DD/`. Counts compare observations on the starting day and the next period's starting day, with the exact timestamps disclosed; they are not exact midnight event counts. Both observations are required. All comparable endpoint developers remain in the report even if the current directory changes. Existing rolling 7/30-day climbs remain separate.
+- `/share/` includes milestone and roundup drafts when supported by history. Daily developer spotlights rotate independently of portfolio size. Cards carry dates, scope and a link back to the project or builder; production PNGs include the public page address. `/announcements/` shows only operator-recorded published posts, never prepared drafts.
+
+### Import requested builders
+
+Apply migrations and configure Clerk first. To review requests, use D1's `listing_requests` table. The import command reads that queue and writes **only the local snapshot**, using the existing `gh` login to fetch public repositories:
+
+```sh
+npm run listings:import -- --local
+# Once production D1 is configured, read its queue instead:
+npm run listings:import -- --remote
+npm run data:refresh
+npm test
+npm run build
+```
+
+The importer re-resolves immutable GitHub IDs, skips already-listed identities, and excludes accounts without eligible projects. Existing imported logins persist through future collector refreshes. Imports never manufacture history or claim a profile. Review the resulting diff and publish through the normal Cloudflare process; queue entries remain as a durable admission record. A requested account may still need eligibility review, and imports/deployment are currently operator-run.
+
+### Prepare and record social posts
+
+```sh
+SITE_URL=https://YOUR-ACTUAL-DOMAIN npm run posts:prepare
+# Review data/announcements.json. Publish the selected draft yourself.
+# Only after it is live, record the real post URL:
+npm run posts:published -- ANNOUNCEMENT_ID https://x.com/YOUR_ACCOUNT/status/POST_ID
+npm run build
+```
+
+The ledger reserves at most three drafts per UTC day and at most one per developer, excludes developers featured or reserved in the preceding seven days, and deduplicates stable milestone/report IDs. Rerunning preparation does not duplicate the day's drafts. Stale snapshots do not produce new spotlights. Prepared items reserve their slot until the cooldown expires; the ledger distinguishes `prepared` from `published`. The command records a URL supplied by the operator; it does not independently verify that X posted it. Changes use a local exclusive lock and atomic file replacement. No X API token, outbound posting call, or automated pinning is present.
+
+Commit the ledger with the snapshot/history so rebuilds and scheduled runs share announcement history. GitHub Actions prepares drafts only when `vars.SITE_URL` is set. No remote is configured in this checkout, so scheduling and deployment are not active. No production posts or outreach were sent during implementation.

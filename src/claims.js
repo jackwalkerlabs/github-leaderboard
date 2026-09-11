@@ -53,7 +53,7 @@ function ownGitHub(developer) {
 }
 function accountSettings() { closeDialogs(); clerk.openUserProfile(); status('Connect GitHub in your account settings, then reopen your developer profile.'); }
 function editorHTML(developer, profile) {
-  return `<form id="profile-editor"><label>Your bio <textarea name="bio" maxlength="300" rows="3" placeholder="What are you building?">${escape(profile.bio)}</textarea></label><label>Website <input name="website" type="url" maxlength="500" placeholder="https://your-site.com" value="${escape(profile.website)}"></label><fieldset><legend>Featured projects <span>Choose up to six</span></legend><div class="featured-picker">${developer.repos.map(repo => `<label><input type="checkbox" name="featured" value="${escape(repo.full_name)}" ${profile.featuredProjects.includes(repo.full_name) ? 'checked' : ''}>${escape(repo.name)}</label>`).join('')}</div></fieldset><p class="claim-note">Your selections appear above the project list. Stars, forks, and ranking always come from GitHub.</p><div class="claim-actions"><button class="profile-button claim-primary" type="submit">Save profile</button><button class="text-button" type="button" id="cancel-profile-edit">Cancel</button></div><p id="edit-status" role="status"></p></form>`;
+  return `<form id="profile-editor"><label>Your bio <textarea name="bio" maxlength="300" rows="3" placeholder="What are you building?">${escape(profile.bio)}</textarea></label><label>Your builder story <textarea name="story" maxlength="2000" rows="6" placeholder="Why did you start? What are you working toward?">${escape(profile.story || '')}</textarea></label><label>Website <input name="website" type="url" maxlength="500" placeholder="https://your-site.com" value="${escape(profile.website)}"></label><fieldset><legend>Featured projects <span>Choose up to six</span></legend><div class="featured-picker">${developer.repos.map(repo => `<label><input type="checkbox" name="featured" value="${escape(repo.full_name)}" ${profile.featuredProjects.includes(repo.full_name) ? 'checked' : ''}>${escape(repo.name)}</label>`).join('')}</div></fieldset><p class="claim-note">Your selections appear above the project list. Stars, forks, and ranking always come from GitHub.</p><div class="claim-actions"><button class="profile-button claim-primary" type="submit">Save profile</button><button class="text-button" type="button" id="cancel-profile-edit">Cancel</button></div><p id="edit-status" role="status"></p></form>`;
 }
 async function renderClaim(developer) {
   current = developer;
@@ -75,6 +75,7 @@ async function renderClaim(developer) {
   const featured = (profile.featuredProjects || []).map(name => developer.repos.find(repo => repo.full_name === name)).filter(Boolean);
   slot.innerHTML = `<div class="claim-heading"><span class="eyebrow">${profile.claimed ? 'CLAIMED PROFILE' : 'YOUR WORK, YOUR STORY'}</span>${profile.claimed ? '<span class="claim-badge" title="GitHub account ownership was verified when this profile was claimed.">✓ GitHub account verified</span>' : ''}</div>
     ${profile.bio ? `<p class="curated-bio">${escape(profile.bio)}</p>` : ''}
+    ${profile.story ? `<section class="builder-story"><h3>Behind the projects</h3><p>${escape(profile.story)}</p></section>` : ''}
     ${profile.website ? `<a class="curated-website" href="${escape(profile.website)}" target="_blank" rel="noopener noreferrer nofollow ugc">${escape(new URL(profile.website).hostname)} ↗</a>` : ''}
     ${featured.length ? `<h3>Featured by the developer</h3><div class="featured-projects">${featured.map(repo => `<a href="${escape(repo.html_url)}" target="_blank" rel="noopener noreferrer">${escape(repo.name)} <span>★ ${new Intl.NumberFormat('en-US').format(repo.stargazers_count)}</span></a>`).join('')}</div>` : ''}
     ${!profile.claimed ? '<h3>Make this profile yours.</h3><p>Add your story, link your website, and put your favorite projects first.</p>' : '<p class="claim-note">Claiming verifies control of this GitHub account. Repository ownership and ranking follow the published methodology.</p>'}
@@ -113,7 +114,7 @@ async function renderClaim(developer) {
         const data = new FormData(form);
         button.disabled = true; message.textContent = 'Saving…';
         try {
-          await api(`/api/profiles/${developer.login}`, 'PATCH', { bio: data.get('bio'), website: data.get('website'), featuredProjects: data.getAll('featured') });
+          await api(`/api/profiles/${developer.login}`, 'PATCH', { bio: data.get('bio'), story: data.get('story'), website: data.get('website'), featuredProjects: data.getAll('featured') });
           if (turn !== revision) return;
           await renderClaim(developer);
           const saved = document.getElementById('claim-status');
@@ -154,7 +155,7 @@ document.getElementById('find-profile-form').onsubmit = event => {
   event.preventDefault();
   const login = document.getElementById('claim-login').value.trim().replace(/^@/, '');
   const person = window.starboardDevelopers?.find(d => d.login.toLowerCase() === login.toLowerCase());
-  if (!person) { document.getElementById('find-profile-status').textContent = 'That account is not in this curated sample yet.'; return; }
+  if (!person) { document.getElementById('find-profile-status').textContent = 'That account is not in this curated sample yet. Use Get your builder page below to request a listing.'; return; }
   document.getElementById('claim-directory').close(); openProfile(person.login);
 };
 function populateDirectory() {
@@ -175,5 +176,32 @@ populateDirectory();
       syncAccount();
     }
   } catch { enabled = false; status('Account features are currently unavailable. You can still browse the leaderboard.'); }
-  finally { ready = true; if (window.starboardProfile) renderClaim(window.starboardProfile); }
+  finally { ready = true; setupJoin(); if (window.starboardProfile) renderClaim(window.starboardProfile); }
 })();
+
+function setupJoin() {
+  const form = document.getElementById('join-form');
+  if (!form) return;
+  const input = document.getElementById('join-login'), message = document.getElementById('join-status'), button = document.getElementById('join-request');
+  input.value = new URLSearchParams(location.search).get('login')?.slice(0, 39) || '';
+  form.onsubmit = event => {
+    event.preventDefault();
+    const login = input.value.trim().replace(/^@/, '');
+    if (!/^[a-z\d][a-z\d-]{0,38}$/i.test(login)) { message.textContent = 'Enter a GitHub username, not a URL.'; return; }
+    const person = window.starboardDevelopers?.find(d => d.login.toLowerCase() === login.toLowerCase());
+    if (person) { openProfile(person.login); return; }
+    message.textContent = enabled ? 'This builder is not listed yet. You can request a listing for your connected GitHub account. We review eligible public projects before import.' : 'This builder is not listed yet. Listing requests open when GitHub sign-in is available. You can browse existing portfolios now.';
+    button.hidden = !enabled;
+  };
+  button.onclick = async () => {
+    if (!clerk?.user) { clerk.openSignIn({ forceRedirectUrl: location.origin + '/join/?login=' + encodeURIComponent(input.value) }); return; }
+    if (!clerk.user.externalAccounts.some(a => ['github', 'oauth_github'].includes(a.provider))) { accountSettings(); return; }
+    button.disabled = true; message.textContent = 'Checking your connected GitHub account…';
+    try {
+      const result = await api('/api/listing-request', 'POST');
+      message.textContent = `Listing requested for ${result.login}. Your request is saved for eligibility review and import. Check this page again to find your portfolio after it is listed.`;
+      button.hidden = true;
+    } catch (error) { message.textContent = error.message; }
+    finally { button.disabled = false; }
+  };
+}

@@ -11,14 +11,15 @@ export function requireGitHubOwner(user, githubId) {
 }
 export function validateEdits(body, developer) {
   if (!body || typeof body !== 'object' || Array.isArray(body) ||
-      Object.keys(body).some(key => !['bio', 'website', 'featuredProjects'].includes(key))) {
-    throw new HttpError(400, 'Only bio, website, and featured projects can be edited.');
+      Object.keys(body).some(key => !['bio', 'website', 'featuredProjects', 'story'].includes(key))) {
+    throw new HttpError(400, 'Only bio, story, website, and featured projects can be edited.');
   }
   if (typeof body.bio !== 'string' || body.bio.length > 300 ||
       typeof body.website !== 'string' || body.website.length > 500 ||
       !Array.isArray(body.featuredProjects) || body.featuredProjects.length > 6) {
     throw new HttpError(400, 'Use a bio up to 300 characters, a website up to 500 characters, and at most six featured projects.');
   }
+  if (body.story !== undefined && (typeof body.story !== 'string' || body.story.length > 2000)) throw new HttpError(400, 'Use a builder story up to 2,000 characters.');
   const website = body.website.trim();
   if (website) {
     let url;
@@ -30,9 +31,9 @@ export function validateEdits(body, developer) {
       new Set(body.featuredProjects).size !== body.featuredProjects.length) {
     throw new HttpError(400, 'Featured projects must be distinct projects from this profile.');
   }
-  return { bio: body.bio.trim(), website, featuredProjects: body.featuredProjects };
+  return { bio: body.bio.trim(), story: (body.story || '').trim(), website, featuredProjects: body.featuredProjects };
 }
 export function publicClaim(row) {
-  return row ? { claimed: true, bio: row.bio, website: row.website,
+  return row ? { claimed: true, bio: row.bio, story: row.story || '', website: row.website,
     featuredProjects: JSON.parse(row.featured_projects), claimedAt: row.claimed_at } : { claimed: false };
 }

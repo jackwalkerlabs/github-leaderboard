@@ -3,7 +3,7 @@ export const METHODOLOGY = 'personal-public-nonfork-spdx-v1';
 const day = value => new Date(value).toISOString().slice(0, 10);
 const dateBefore = (value, days) => day(Date.parse(value.slice(0, 10) + 'T00:00:00Z') - days * DAY);
 
-function validate(observation) {
+export function validate(observation) {
   if (observation.version !== 1 || observation.methodology !== METHODOLOGY || !Number.isFinite(Date.parse(observation.observed_at))) return false;
   const users = new Set(), repos = new Set();
   if (!Array.isArray(observation.developers)) return false;
@@ -38,6 +38,10 @@ export function competition(history, days, snapshot, asOf = snapshot.fetched_at)
   if (!start) return result;
   // A stale observation never presents itself as a current competition.
   if (Date.parse(asOf) - Date.parse(end.observed_at) > 2 * DAY) return { ...result, status: 'stale' };
+  return { ...result, ...compareObservations(start, end, snapshot) };
+}
+
+export function compareObservations(start, end, snapshot) {
   const known = new Map(snapshot.developers.filter(d => d.repos.length).map(d => [d.id, d]));
   const baseline = new Map(start.developers.map(d => [d.id, d]));
   const entries = [];
@@ -52,7 +56,7 @@ export function competition(history, days, snapshot, asOf = snapshot.fetched_at)
       matched: matched.length, added: current.repos.length - matched.length, removed: previous.repos.length - matched.length,
       baselineStars: previous.repos.reduce((sum, repo) => sum + repo.stargazers_count, 0) });
   }
-  return { ...result, status: entries.length ? 'ready' : 'collecting', startObservedAt: start.observed_at, endObservedAt: end.observed_at,
+  return { status: entries.length ? 'ready' : 'collecting', startObservedAt: start.observed_at, endObservedAt: end.observed_at,
     entries: rankEntries(entries), rising: rankEntries(entries.filter(entry => entry.baselineStars < 10000)),
     excludedDevelopers: known.size - entries.length };
 }
