@@ -70,6 +70,12 @@ The competition builder compares matched repository IDs across real observations
 
 ## Enable Clerk locally
 
+This machine now uses the **Starboard** development application in Clerk's Personal Workspace, with GitHub as the sole sign-in provider. [Open its dashboard](https://dashboard.clerk.com/apps/app_3JCC0nrb6BcgcRBQRGHHwqUb2IP/instances/ins_3JCC0lK8zl15BaArsgOAbmnb1yk). Development keys are stored only in the ignored, mode-600 `.dev.vars`; they are not included in this repository. Local APP_ORIGIN is `http://localhost:8792`.
+
+Verified September 11, 2026: GitHub OAuth signed in `jackwalkerlabs`, the local header showed an authenticated account, and the Worker verified the live Clerk session/GitHub identity and saved a D1 listing request. The listing remains pending import. Both sign-in and first-time sign-up now receive the same explicit return URL; regression tests cover onboarding and profile routes. No production deployment was made.
+
+For a fresh checkout or another machine:
+
 1. Create a Clerk application and enable GitHub as a social connection. Enable connecting GitHub from the account settings UI, including for users who signed in with another method.
 2. Copy `.dev.vars.example` to `.dev.vars`. Set `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, and `APP_ORIGIN=http://localhost:8792`. The secret key is only read by the Worker.
 3. Restart the development server. Open a developer profile and sign in. The matching GitHub account must be connected before claiming.
@@ -96,7 +102,7 @@ The `.openai/hosting.json` is the recovered historical Sites association. It des
 
 `npm test` covers claim authorization and persistence against SQLite, invalid or foreign edits, unlinking GitHub, simulated Clerk UI flows, HTML escaping, the gh collector, snapshot integrity, immutable daily history, crawlable generated pages, metadata, internal links, pagination, preview indexing, and the no-fetch homepage fallback. It also covers matched-repository growth, transfers and missing history, tied ranks, baseline league membership, browser following persistence/storage failures, post drafts/intent URLs, PNG export wiring, and the transition from collecting to indexable standings. `npm run build` packages the frontend and generates public pages. `npx wrangler deploy --dry-run` checks Worker packaging without deploying.
 
-Live Clerk OAuth and a remote D1 deployment still need account configuration and end-to-end validation. The initial Chrome attachment refusal was resolved by preparing the existing approved profile. Design validation uses a task tab in the already-open Chrome window; no new browser was launched.
+Development GitHub OAuth is configured and browser-verified. Production Clerk OAuth and remote D1 still need configuration and end-to-end validation. The initial Chrome attachment refusal was resolved by preparing the existing approved profile. Design validation uses a task tab in the already-open Chrome window; no new browser was launched.
 
 ## Shared design with UseCLIs
 

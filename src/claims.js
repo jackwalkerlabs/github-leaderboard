@@ -45,7 +45,8 @@ function startSignIn(login) {
   pendingLogin = login;
   sessionStorage.setItem('starboard-claim-profile', login);
   closeDialogs();
-  clerk.openSignIn({ forceRedirectUrl: `${location.origin}/developers/${encodeURIComponent(login.toLowerCase())}/` });
+  const returnUrl = `${location.origin}/developers/${encodeURIComponent(login.toLowerCase())}/`;
+  clerk.openSignIn({ forceRedirectUrl: returnUrl, signUpForceRedirectUrl: returnUrl });
 }
 function ownGitHub(developer) {
   return clerk?.user?.externalAccounts.some(account =>
@@ -194,7 +195,10 @@ function setupJoin() {
     button.hidden = !enabled;
   };
   button.onclick = async () => {
-    if (!clerk?.user) { clerk.openSignIn({ forceRedirectUrl: location.origin + '/join/?login=' + encodeURIComponent(input.value) }); return; }
+    if (!clerk?.user) {
+      const returnUrl = location.origin + '/join/?login=' + encodeURIComponent(input.value);
+      clerk.openSignIn({ forceRedirectUrl: returnUrl, signUpForceRedirectUrl: returnUrl }); return;
+    }
     if (!clerk.user.externalAccounts.some(a => ['github', 'oauth_github'].includes(a.provider))) { accountSettings(); return; }
     button.disabled = true; message.textContent = 'Checking your connected GitHub account…';
     try {

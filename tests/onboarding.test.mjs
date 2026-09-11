@@ -32,7 +32,9 @@ test('known builder opens their portfolio; an unconfigured unknown builder gets 
 });
 test('new-builder sign-in returns to onboarding instead of a nonexistent developer URL', async t => {
   const s = await setup(t, true); s.submit('new-builder'); s.doc.getElementById('join-request').click();
-  assert.equal(s.calls.find(c => c.signIn).signIn.forceRedirectUrl, 'https://starboard.test/join/?login=new-builder');
+  const options = s.calls.find(c => c.signIn).signIn;
+  assert.equal(options.forceRedirectUrl, 'https://starboard.test/join/?login=new-builder');
+  assert.equal(options.signUpForceRedirectUrl, options.forceRedirectUrl, 'first-time GitHub users must return to onboarding too');
 });
 test('verified listing submission describes the actual connected account and remains a request', async t => {
   const s = await setup(t, true, true); s.submit('typed-name'); s.doc.getElementById('join-request').click(); await tick();

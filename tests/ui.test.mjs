@@ -26,7 +26,7 @@ async function setup(configured = false, signedIn = false) {
     async load() {}
     async signOut() { this.user = null; this.session = null; }
     addListener(fn) { fn({ user: this.user }); }
-    openSignIn() { calls.push(['sign-in']); }
+    openSignIn(options) { calls.push(['sign-in', options]); }
   };
   w.Clerk = new w.TestClerk();
   w.__internal_ClerkUICtor = class {};
@@ -58,7 +58,9 @@ test('configured signed-out visitor gets a sign-in action', async () => {
   s.document.dispatchEvent(new s.w.CustomEvent('starboard:open-profile', { detail: s.d.login })); await tick();
   s.document.getElementById('profile-sign-in').click();
   assert.equal(s.document.getElementById('profile-dialog').open, false);
-  assert.ok(s.calls.some(([path]) => path === 'sign-in'));
+  const options = s.calls.find(([path]) => path === 'sign-in')[1];
+  assert.equal(options.forceRedirectUrl, 'https://starboard.test/developers/' + s.d.login.toLowerCase() + '/');
+  assert.equal(options.signUpForceRedirectUrl, options.forceRedirectUrl);
   s.close();
 });
 test('claim editor saves selected projects and escapes public bio', async () => {
