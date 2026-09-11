@@ -45,7 +45,7 @@ function startSignIn(login) {
   pendingLogin = login;
   sessionStorage.setItem('starboard-claim-profile', login);
   closeDialogs();
-  clerk.openSignIn({ forceRedirectUrl: `${location.origin}/#developer=${encodeURIComponent(login)}` });
+  clerk.openSignIn({ forceRedirectUrl: `${location.origin}/developers/${encodeURIComponent(login.toLowerCase())}/` });
 }
 function ownGitHub(developer) {
   return clerk?.user?.externalAccounts.some(account =>
@@ -134,7 +134,7 @@ function syncAccount() {
     const login = pendingLogin; pendingLogin = null;
     sessionStorage.removeItem('starboard-claim-profile');
     openProfile(login);
-  } else if (current && document.getElementById('profile-dialog').open) renderClaim(current);
+  } else if (current && (document.getElementById('profile-dialog')?.open || document.querySelector('.content-page #profile-claim'))) renderClaim(current);
 }
 document.addEventListener('starboard:profile', event => renderClaim(event.detail));
 document.getElementById('sign-out').onclick = async event => {

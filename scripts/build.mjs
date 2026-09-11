@@ -1,7 +1,14 @@
-import { cp, mkdir, rm } from 'node:fs/promises';
+import { cp, mkdir, rm, readFile, readdir } from 'node:fs/promises';
 import { build } from 'esbuild';
+import { generateSite, siteOrigin } from './site.mjs';
+const origin = siteOrigin(process.env.SITE_URL);
+if (process.argv.includes('--production') && !origin) throw new Error('Set SITE_URL to the production HTTPS origin before deploying.');
 await rm('build', { recursive: true, force: true });
 await mkdir('build', { recursive: true });
 await cp('dist', 'build', { recursive: true });
 await build({ entryPoints: ['src/claims.js'], outfile: 'build/claims.js', bundle: true, minify: true, format: 'esm', target: ['es2022'] });
-console.log('Built Starboard in build/');
+const historyFiles = await readdir('data/history').catch(error => { if (error.code === 'ENOENT') return []; throw error; });
+const history = await Promise.all(historyFiles.filter(file => /^\d{4}-\d{2}-\d{2}\.json$/.test(file)).map(file => readFile('data/history/' + file, 'utf8').then(JSON.parse)));
+const result = await generateSite({ snapshot: JSON.parse(await readFile('dist/data.json', 'utf8')), history, template: await readFile('dist/index.html', 'utf8'), outDir: 'build', origin, asOf: new Date().toISOString() });
+console.log(`Built ${result.pages} pages: ${result.developers} developers, ${result.projects} projects, ${result.languages} language collections.`);
+if (!origin) console.log('Preview build: pages are noindex. Set SITE_URL=https://your-domain.example for canonical URLs and sitemap.xml.');

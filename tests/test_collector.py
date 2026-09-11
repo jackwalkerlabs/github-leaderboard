@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import unittest
+import tempfile
 from unittest.mock import patch
 from types import SimpleNamespace
 from pathlib import Path
@@ -15,7 +16,7 @@ class CollectorTests(unittest.TestCase):
             self.assertEqual(run.call_args.args[0][:5], ['gh', 'api', '--hostname', 'github.com', 'users/alice'])
 
     def test_only_public_licensed_nonfork_repos_count(self):
-        base = dict(name='tool', full_name='alice/tool', private=False, fork=False, stargazers_count=12, forks_count=3, license={'spdx_id':'MIT'})
+        base = dict(id=42, name='tool', full_name='alice/tool', private=False, fork=False, stargazers_count=12, forks_count=3, license={'spdx_id':'MIT'})
         repos = [base, dict(base, private=True), dict(base, fork=True), dict(base, license=None), dict(base, license={'spdx_id':'NOASSERTION'})]
         with patch.object(collector, 'get', side_effect=[{'id':123,'login':'alice','type':'User'}, repos]):
             result = collector.collect('alice')
@@ -23,6 +24,33 @@ class CollectorTests(unittest.TestCase):
             self.assertEqual(result['total_stars'], 12)
             self.assertEqual(result['total_forks'], 3)
             self.assertEqual(result['excluded_repos'], 4)
+            self.assertEqual(result['repos'][0]['id'], 42)
+
+    def test_history_preserves_first_complete_observation_and_stable_ids(self):
+        snapshot = {'fetched_at': '2026-09-11T16:00:00Z', 'errors': [], 'developers': [
+            {'id': 123, 'login': 'alice', 'fetched_at': '2026-09-11T15:59:00Z', 'repos': [
+                {'id': 42, 'full_name': 'alice/tool', 'stargazers_count': 12, 'forks_count': 3, 'archived': False, 'language': 'Rust'}]}]}
+        with tempfile.TemporaryDirectory() as folder:
+            directory = Path(folder)
+            self.assertTrue(collector.save_history(snapshot, directory))
+            path = directory / '2026-09-11.json'
+            original = path.read_bytes()
+            snapshot['developers'][0]['repos'][0]['stargazers_count'] = 20
+            self.assertFalse(collector.save_history(snapshot, directory))
+            self.assertEqual(path.read_bytes(), original)
+            snapshot['fetched_at'] = '2026-09-12T16:00:00Z'
+            with self.assertRaises(ValueError): collector.save_history(snapshot, directory)
+            snapshot['developers'][0]['fetched_at'] = '2026-09-12T15:59:00Z'
+            snapshot['developers'][0]['repos'][0]['full_name'] = 'alice/renamed-tool'
+            self.assertTrue(collector.save_history(snapshot, directory))
+            next_repo = json.loads((directory / '2026-09-12.json').read_text())['developers'][0]['repos'][0]
+            self.assertEqual(next_repo['id'], 42)
+            self.assertEqual(next_repo['stargazers_count'], 20)
+            snapshot['errors'] = [{'login': 'bob', 'error': 'unavailable'}]
+            with self.assertRaises(ValueError): collector.save_history(snapshot, directory)
+            snapshot['errors'] = []
+            del snapshot['developers'][0]['repos'][0]['id']
+            with self.assertRaises(ValueError): collector.save_history(snapshot, directory)
 
     def test_snapshot_integrity(self):
         data = json.loads((Path(__file__).resolve().parents[1] / 'dist/data.json').read_text())
@@ -32,6 +60,7 @@ class CollectorTests(unittest.TestCase):
             self.assertEqual(developer['total_stars'], sum(r['stargazers_count'] for r in developer['repos']))
             self.assertEqual(developer['total_forks'], sum(r['forks_count'] for r in developer['repos']))
             for repo in developer['repos']:
+                self.assertIsInstance(repo['id'], int)
                 self.assertEqual(repo['full_name'].split('/')[0].lower(), developer['login'].lower())
                 self.assertNotIn(repo['license']['spdx_id'], ['NONE', 'NOASSERTION'])
 

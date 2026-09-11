@@ -26,9 +26,47 @@ npm run build
 
 `collect_data.py` calls `gh api` through the existing GitHub CLI login, paginates repository results, and refreshes the curated `USERS` list plus existing profiles. Credentials stay in gh; no GitHub token is stored in source or shipped to the browser. The authenticated account needs access only to public information for this operation; private repositories are explicitly excluded even when the login can access them.
 
-The collector retains numeric GitHub user IDs for claim verification. Forks, organizations, and repositories without a detected SPDX license are excluded. Archived repositories remain available with filtering. API failures retain that developer's previous snapshot, record a non-sensitive error, and return a nonzero exit status. Each profile keeps its own fetch timestamp; no automatic refresh schedule or historical growth tracking is configured.
+The collector retains numeric GitHub user IDs for claim verification and repository IDs for historical comparisons. Forks, organizations, and repositories without a detected SPDX license are excluded. Archived repositories remain available with filtering. API failures retain that developer's previous snapshot, record a non-sensitive error, and return a nonzero exit status. Each profile keeps its own fetch timestamp.
 
-Latest successful refresh on 2026-09-11: 43 personal accounts checked, 41 with eligible projects, 3,013 projects, 3,188,388 stars, 268,385 forks, zero refresh errors. Two accounts have no eligible personal projects and do not appear in the leaderboard.
+Latest successful refresh on 2026-09-11 at 16:20 UTC: 43 personal accounts checked, 41 with eligible projects, 3,013 projects, 3,188,420 stars, 268,386 forks, zero refresh errors. Two accounts have no eligible personal projects and do not appear in the leaderboard.
+
+## Public pages and search indexing
+
+`npm run build` generates the homepage and dedicated static HTML pages in `build/`. Content, statistics, and ordinary internal links are available before JavaScript runs:
+
+- `/developers/` and `/developers/sharkdp/`: developer directory and portfolios, including all eligible project links, language breakdowns, and the existing claim/edit integration.
+- `/projects/`, `/projects/page/2/`, and `/projects/sharkdp/bat/`: a directory with 48 projects per page and individual repository pages with source links, license, dates, topics, ownership, and related projects.
+- `/languages/` and `/languages/rust/`: collections with at least 10 repositories from at least 3 developers. Language-specific rankings count only matching repositories; primary language comes from GitHub. Smaller collections remain accessible through homepage filters.
+
+Routes use lowercase segments and trailing slashes. Cloudflare normalizes slash/index.html variants and returns an actual 404 for unknown pages. The original hash profile dialogs remain compatible with old links, but browsing and copied profile links point to dedicated pages. User-edited profile details are loaded from D1 after the GitHub-based HTML renders; those edits are not included in static metadata.
+
+Set the **build-time** `SITE_URL` to the real production HTTPS origin to generate canonical URLs, Open Graph metadata, structured data, and `sitemap.xml`:
+
+```sh
+SITE_URL=https://your-domain.example npm run build
+```
+
+Without `SITE_URL`, builds are previews: HTML carries `noindex,follow` and no sitemap is generated. `npm run deploy` requires `SITE_URL`. Use the same origin as Clerk/Worker `APP_ORIGIN`; do not publish a placeholder domain.
+
+Arbitrary date/filter combinations do not produce indexable routes. Current activity filters use latest push timestamps and **all-time** star counts. Competition pages stay noindex while collecting history and become indexable only when comparable standings exist. Dated reports are not generated.
+
+## Competition, following, and sharing
+
+- `/trending/week/` and `/trending/month/` show **the climb**: rolling 7-day and 30-day net star gains. Each has All builders and Rising builders leagues. Rising builders had fewer than 10,000 eligible stars at the starting observation. Both use absolute net gains; ties share rank. The gap shown is the extra stars needed to pass the next higher score, assuming that score stays still. Rankings are ongoing, not final awards.
+- The comparison uses complete observations on exact UTC dates 7 or 30 days apart, immutable repository IDs, and the same personal owner at both endpoints. Added, removed, transferred, or newly eligible repositories do not inflate the score. Negative changes count. Developers without matched repositories are excluded and coverage is disclosed. Incompatible/invalid history and stale comparisons cannot produce active standings. The initial dataset has one observation, so the actual site correctly shows **Collecting history**.
+- Developer profiles show their scoped all-time rank with **Follow** and **Share update** actions. `/following/` keeps saved builders together across visits in the same browser, using GitHub IDs. It is local browser storage, not a Clerk-synced social graph; no email/push alerts are sent and following has no effect on scores.
+- `/share/` provides developer spotlight drafts and, when positive comparable growth exists, weekly/monthly leaderboard stories. Share previews include editable text and a downloadable 1200×630 PNG card with date, rank, and sample/league scope. GitHub logins are not assumed to be X handles. [X Web Intents](https://docs.x.com/x-for-websites/web-intents/overview) open a composer for the user to review; no automatic posting or X credentials are used. Attach the downloaded PNG manually. These are downloadable cards, not automatic Open Graph images.
+- With no production `SITE_URL`, users can preview/copy text and download cards, but the X composer link is hidden so local preview URLs are never shared publicly. `/following/` and `/share/` always remain noindex.
+
+The ranking and post content refresh at build time after a data refresh. Running the data workflow alone does not update a deployed site; Cloudflare deployment still needs to be configured.
+
+## Daily history
+
+A successful full `npm run data:refresh` also writes `data/history/YYYY-MM-DD.json`. The first complete observation of each UTC day is preserved; subsequent runs update the current snapshot without replacing that day's baseline. Partial failures, stale profiles, or missing immutable IDs cannot become a historical baseline. History is kept outside public build assets. The initial baseline is September 11, 2026.
+
+`.github/workflows/refresh-data.yml` is ready for a daily run at 06:17 UTC and manual **Run workflow**. It uses the runner's installed `gh` and repository `GITHUB_TOKEN`, tests/builds the result, then commits only current data and history. **This checkout has no Git remote, so the schedule is not active.** Push it to the default branch of the intended GitHub repository, enable Actions, and allow the bot to commit data under your branch rules. GitHub schedules can be delayed. This workflow does not deploy the Cloudflare Worker; commits made with `GITHUB_TOKEN` do not trigger ordinary push-based Actions workflows.
+
+The competition builder compares matched repository IDs across real observations on UTC dates 7 or 30 days apart and shows actual dates and coverage. Net star-count changes can be negative and do not represent unique users. Missing baselines are never treated as zero. Historical archive awards and rank-movement notifications would need additional stored comparisons before being introduced.
 
 ## Enable Clerk locally
 
@@ -50,13 +88,13 @@ The app uses a [Worker with static assets](https://developers.cloudflare.com/wor
 2. Apply `npx wrangler d1 migrations apply starboard --remote`.
 3. Set `APP_ORIGIN` and `CLERK_PUBLISHABLE_KEY` in the Wrangler `vars` configuration to the final site origin (without trailing slash) and production publishable key. Set the secret with `npx wrangler secret put CLERK_SECRET_KEY`.
 4. Configure the production domain and GitHub OAuth connection in Clerk. Use that same origin for the Worker/custom domain.
-5. Run `npm run deploy`. Verify sign-in, connecting GitHub, claim ownership, saving edits, sign-out, and denial from a different account.
+5. Run `SITE_URL=https://your-domain.example npm run deploy` using the actual configured origin. Verify sign-in, connecting GitHub, claim ownership, saving edits, sign-out, and denial from a different account. Check the production canonical URLs and submit `/sitemap.xml` to your search tooling.
 
 The `.openai/hosting.json` is the recovered historical Sites association. It describes the old static deployment, not this Worker API. Use Wrangler for the Cloudflare implementation; publishing this backend on Sites would need separate hosting configuration. No Sites version was saved or published in this session.
 
 ## Validation
 
-`npm test` covers claim authorization and persistence against SQLite, invalid or foreign edits, unlinking GitHub, UI flows with a simulated Clerk session, HTML escaping, the gh collector, and snapshot integrity. `npm run build` packages the frontend. `npx wrangler deploy --dry-run` checks Worker packaging without deploying.
+`npm test` covers claim authorization and persistence against SQLite, invalid or foreign edits, unlinking GitHub, simulated Clerk UI flows, HTML escaping, the gh collector, snapshot integrity, immutable daily history, crawlable generated pages, metadata, internal links, pagination, preview indexing, and the no-fetch homepage fallback. It also covers matched-repository growth, transfers and missing history, tied ranks, baseline league membership, browser following persistence/storage failures, post drafts/intent URLs, PNG export wiring, and the transition from collecting to indexable standings. `npm run build` packages the frontend and generates public pages. `npx wrangler deploy --dry-run` checks Worker packaging without deploying.
 
 Live Clerk OAuth and a remote D1 deployment still need account configuration and end-to-end validation. The initial Chrome attachment refusal was resolved by preparing the existing approved profile. Design validation uses a task tab in the already-open Chrome window; no new browser was launched.
 
