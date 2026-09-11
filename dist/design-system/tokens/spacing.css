@@ -1,0 +1,30 @@
+:root{
+  --space-0:0px;
+  --space-1:2px;
+  --space-2:4px;
+  --space-3:8px;
+  --space-4:12px;
+  --space-5:16px;
+  --space-6:20px;
+  --space-7:24px;
+  --space-8:32px;
+  --space-9:40px;
+  --space-10:56px;
+  --space-11:72px;
+  --space-12:96px;
+
+  --gap-inline:8px;
+  --gap-stack:12px;
+  --gap-card:16px;
+  --gap-section:56px;
+
+  --pad-card:16px;
+  --pad-card-lg:20px;
+  --pad-control-x:14px;
+  --pad-control-y:9px;
+
+  --container-max:1152px;
+  --container-narrow:720px;
+  --container-gutter:20px;
+  --header-height:60px;
+}
