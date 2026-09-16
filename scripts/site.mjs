@@ -44,7 +44,16 @@ export async function generateSite({ snapshot, template, outDir, origin = null, 
   if (new Set(languagePaths.values()).size !== languages.length) throw new Error('Language route collision');
   const shell = new JSDOM(template);
   const document = shell.window.document;
-  const header = document.querySelector('.site-header').outerHTML;
+  const headerTemplate = document.querySelector('.site-header').cloneNode(true);
+  const headerFor = path => {
+    const header = headerTemplate.cloneNode(true);
+    for (const link of header.querySelectorAll('.site-nav a')) {
+      const href = link.getAttribute('href');
+      const section = href.startsWith('/trending/') ? '/trending/' : href;
+      if (path === href || path.startsWith(section)) link.setAttribute('aria-current', path === href ? 'page' : 'location');
+    }
+    return header.outerHTML;
+  };
   const finder = document.getElementById('claim-directory').outerHTML;
   const footer = document.querySelector('footer').outerHTML;
   const baseHead = document.head.innerHTML.replace(/<title>.*?<\/title>/s, '').replace(/<meta name="description"[^>]*>/, '');
@@ -65,14 +74,14 @@ export async function generateSite({ snapshot, template, outDir, origin = null, 
   async function page({ path, title, description, body, crumbs = [], profile = null, schema = null, index = true, social = null }) {
     if (profile) {
       const ranked = engagement.profiles.find(person => person.id === profile.id);
-      body = body.replace('<section id="profile-claim"', profileCompetition(ranked, engagement) + portfolioMilestones(profile, engagement.events) + '<section id="profile-claim"');
+      body = body.replace('<!--portfolio-progress-->', profileCompetition(ranked, engagement) + portfolioMilestones(profile, engagement.events));
       social = socialPayload(engagement, [ranked]);
     }
     const filename = path === '/404.html' ? '404.html' : path.slice(1) + 'index.html';
     const destination = join(outDir, filename);
     await mkdir(join(destination, '..'), { recursive: true });
     const graph = origin ? [schema, { '@type': 'BreadcrumbList', itemListElement: [['Home', '/'], ...crumbs].map(([name, route], i) => ({ '@type': 'ListItem', position: i + 1, name, item: origin + (route || path) })) }].filter(Boolean) : [];
-    const html = `<!doctype html><html lang="en"><head>${baseHead}${metadata(title, description, path, index)}${graph.length ? `<script type="application/ld+json">${json({ '@context': 'https://schema.org', '@graph': graph })}</script>` : ''}</head><body><a class="skip-link" href="#main">Skip to content</a>${header}<p id="account-status" class="account-status" role="status"></p><main id="main" class="content-page">${breadcrumb(crumbs)}${body}</main>${finder}${footer}<script id="page-data" type="application/json">${json({ developers: directory, profile })}</script><script src="/page.js" defer></script><script type="module" src="/claims.js"></script>${social ? `<script id="engagement-data" type="application/json">${json(social)}</script><script src="/engagement.js" defer></script>` : ''}</body></html>`;
+    const html = `<!doctype html><html lang="en"><head>${baseHead}${metadata(title, description, path, index)}${graph.length ? `<script type="application/ld+json">${json({ '@context': 'https://schema.org', '@graph': graph })}</script>` : ''}</head><body><a class="skip-link" href="#main">Skip to content</a>${headerFor(path)}<p id="account-status" class="account-status" role="status"></p><main id="main" class="content-page">${breadcrumb(crumbs)}${body}</main>${finder}${footer}<script id="page-data" type="application/json">${json({ developers: directory, profile })}</script><script src="/page.js" defer></script><script type="module" src="/claims.js"></script>${social ? `<script id="engagement-data" type="application/json">${json(social)}</script><script src="/engagement.js" defer></script>` : ''}</body></html>`;
     await writeFile(destination, html);
     if (path !== '/404.html') routes.push({ path, lastmod: profile?.fetched_at || snapshot.fetched_at, index });
   }
@@ -89,7 +98,7 @@ export async function generateSite({ snapshot, template, outDir, origin = null, 
   document.getElementById('rows').innerHTML = table(developers);
   document.getElementById('rows').dataset.prerendered = 'true';
   document.getElementById('data-time').textContent = `Dataset assembled ${new Date(snapshot.fetched_at).toUTCString()}. Profiles show their own observation dates.`;
-  document.querySelector('.intro').insertAdjacentHTML('afterend', competitionTeaser(engagement));
+  document.querySelector('.metrics').insertAdjacentHTML('afterend', competitionTeaser(engagement));
   document.body.insertAdjacentHTML('beforeend', `<script id="engagement-data" type="application/json">${json(socialPayload(engagement))}</script><script src="/engagement.js" defer></script>`);
   await writeFile(join(outDir, 'index.html'), shell.serialize());
   routes.push({ path: '/', lastmod: snapshot.fetched_at, index: true });
@@ -107,7 +116,11 @@ export async function generateSite({ snapshot, template, outDir, origin = null, 
     const languageBreakdown = [...counts].sort((a, b) => b[1] - a[1]).map(([name, count]) => `<li>${languageLink(name)}<span>${number(count)} projects</span></li>`).join('');
     await page({ path: developerPath(d.login), title: `${d.name || d.login} (@${d.login}) — Open source projects & GitHub stars | Repo League`, description: `Explore ${d.login}'s ${number(repos.length)} open source projects with ${number(d.total_stars)} GitHub stars and ${number(d.total_forks)} forks. ${repos.slice(0, 3).map(r => r.name).join(', ')} and more.`, crumbs: [['Developers', '/developers/'], [d.login]], profile: d,
       schema: { '@type': 'ProfilePage', dateModified: d.fetched_at || snapshot.fetched_at, mainEntity: { '@type': 'Person', name: d.name || d.login, alternateName: d.login, url: origin + developerPath(d.login), sameAs: [d.html_url], description: d.bio || undefined, image: d.avatar_url } },
-      body: `<div class="page-intro"><span class="eyebrow">DEVELOPER PORTFOLIO</span><div class="profile-hero"><img class="profile-avatar" src="${escape(d.avatar_url)}" alt="" width="76" height="76"><div><h1>${escape(d.name || d.login)}</h1><span>@${escape(d.login)}${d.location ? ` · ${escape(d.location)}` : ''}</span></div></div><p class="profile-bio">${escape(d.bio || 'Explore this developer’s public open source projects.')}</p><div class="profile-actions"><a class="profile-button" href="${escape(d.html_url)}" target="_blank" rel="noopener noreferrer">GitHub profile ↗</a><a class="profile-button" href="/#compare=${encodeURIComponent(d.login)}">Compare developer</a><button id="copy-profile" class="profile-button" hidden>Copy profile link</button><span id="copy-status" role="status"></span></div></div>${stats([['All-time stars', number(d.total_stars)], ['Projects', number(repos.length)], ['Forks', number(d.total_forks)], ['GitHub followers', number(d.followers)]])}<section id="profile-claim" class="profile-claim" aria-label="Profile ownership and featured work"><h2>Make this profile yours</h2><p>Enable JavaScript to check profile claiming availability.</p></section><section class="page-section"><h2>Languages across projects</h2><ul class="language-list">${languageBreakdown || '<li>No primary language detected.</li>'}</ul></section><section class="page-section"><div class="section-heading"><h2>Open source projects <span class="count">${number(repos.length)}</span></h2><span>Most stars first</span></div>${projectCollection(repos)}</section><p class="profile-coverage">${number(repos.filter(r => !r.archived).length)} non-archived · ${number(repos.filter(r => r.archived).length)} archived · ${number(d.excluded_repos)} repositories excluded by eligibility rules.</p>${provenance(d.fetched_at)}` });
+      body: `<div class="page-intro portfolio-intro"><span class="eyebrow">DEVELOPER PORTFOLIO</span><div class="profile-hero"><img class="profile-avatar" src="${escape(d.avatar_url)}" alt="" width="76" height="76"><div><h1>${escape(d.name || d.login)}</h1><span>@${escape(d.login)}${d.location ? ` · ${escape(d.location)}` : ''}</span></div></div><p class="profile-bio">${escape(d.bio || 'Explore this developer’s public open source projects.')}</p><div class="profile-actions"><a class="profile-button" href="${escape(d.html_url)}" target="_blank" rel="noopener noreferrer">GitHub profile ↗</a><a class="profile-button" href="/#compare=${encodeURIComponent(d.login)}">Compare developer</a><button id="copy-profile" class="profile-button" hidden>Copy profile link</button><span id="copy-status" role="status"></span></div></div>
+      ${stats([['All-time stars', number(d.total_stars)], ['Projects', number(repos.length)], ['Forks', number(d.total_forks)], ['GitHub followers', number(d.followers)]])}
+      <div class="portfolio-layout"><div class="portfolio-main"><section class="page-section"><div class="section-heading"><h2>Open source projects <span class="count">${number(repos.length)}</span></h2><span>Most stars first</span></div>${projectCollection(repos)}</section><section id="profile-claim" class="profile-claim" aria-label="Profile ownership and featured work"><h2>Make this profile yours</h2><p>Enable JavaScript to check profile claiming availability.</p></section></div>
+      <aside class="portfolio-sidebar" aria-label="League standing and project milestones"><!--portfolio-progress--><details class="page-section portfolio-languages"><summary>Languages <span class="count">${counts.size}</span></summary><ul class="language-list">${languageBreakdown || '<li>No primary language detected.</li>'}</ul></details></aside></div>
+      <p class="profile-coverage">${number(repos.filter(r => !r.archived).length)} non-archived · ${number(repos.filter(r => r.archived).length)} archived · ${number(d.excluded_repos)} repositories excluded by eligibility rules.</p>${provenance(d.fetched_at)}` });
   }
 
   const pageSize = 48, totalPages = Math.ceil(projects.length / pageSize);

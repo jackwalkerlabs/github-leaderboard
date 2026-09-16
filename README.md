@@ -151,3 +151,7 @@ Commit the ledger with the snapshot/history so rebuilds and scheduled runs share
 ## Brand and existing integrations
 
 The public product name is **Repo League** (formerly Starboard), with `repoleague` used for package and download names. The existing Clerk application display name, Cloudflare Worker/D1 names, Sites project association, and GitHub repository keep their original identifiers. Browser storage keys and internal events also remain stable so the rebrand preserves following preferences and claim flows. A production domain has not been selected or configured.
+
+## Repo League layout
+
+The homepage keeps its introduction and weekly status compact so rankings are easier to reach. Developer portfolios place projects beside league standing and next-milestone cards on desktop; on smaller screens the cards form a horizontal, scrollable row. Claimed stories and featured work appear above projects, while unclaimed-profile prompts sit below them. Language breakdowns remain available in a disclosure. The existing TrustMRR-derived UseCLIs tokens and Inconsolata fonts remain in use.
