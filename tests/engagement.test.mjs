@@ -72,7 +72,7 @@ test('share opens an editable, dated, scoped draft and copies the configured pub
   assert.deepEqual(s.copied, ['Useful open source & real progress\nhttps://starboard.example/developers/alice/']);
   s.doc.getElementById('download-share').click(); await tick();
   assert.deepEqual(s.downloads[0], { width: 1200, height: 630, type: 'image/png' });
-  assert.match(s.downloads[1].filename, /starboard-profile-1-2026-09-11\.png/);
+  assert.match(s.downloads[1].filename, /repoleague-profile-1-2026-09-11\.png/);
   assert.equal(s.doc.getElementById('download-share').disabled, false);
 });
 

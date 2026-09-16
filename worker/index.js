@@ -39,7 +39,7 @@ export function createWorker({ getUser = authenticate, githubFetch = fetch } = {
         const read = () => env.DB.prepare('SELECT * FROM profile_claims WHERE github_user_id = ?').bind(githubId).first();
         if (request.method === 'GET') return json({ ...publicClaim(await read()), claimsEnabled: configured });
         if (!configured) throw new HttpError(503, 'Profile claiming is not available yet.');
-        if (request.headers.get('Origin') !== env.APP_ORIGIN || url.origin !== env.APP_ORIGIN) throw new HttpError(403, 'Please use Starboard directly to update your profile.');
+        if (request.headers.get('Origin') !== env.APP_ORIGIN || url.origin !== env.APP_ORIGIN) throw new HttpError(403, 'Please use Repo League directly to update your profile.');
         const user = await getUser(request, env);
         requireGitHubOwner(user, githubId);
         if (request.method === 'POST') {

@@ -43,7 +43,7 @@ function initEnhancements(){
  el('compare-open').addEventListener('click',()=>openComparison());el('compare-close').addEventListener('click',()=>el('compare-dialog').close());el('compare-dialog').addEventListener('close',()=>{if(location.hash.startsWith('#compare='))history.replaceState(null,'',location.pathname+location.search);});
  document.addEventListener('click',e=>{const button=e.target.closest('[data-compare-person]');if(button)openComparison([button.dataset.comparePerson]);});
  el('copy-comparison').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(location.href);el('comparison-copy-status').textContent='Link copied';}catch{el('comparison-copy-status').textContent='Copy the URL from your address bar.';}});
- el('export-data').addEventListener('click',()=>{const csv=exportRows().map(row=>row.map(csvCell).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob(['\uFEFF',csv],{type:'text/csv;charset=utf-8;'}));const a=document.createElement('a');a.href=url;a.download=`starboard-${state.view}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+ el('export-data').addEventListener('click',()=>{const csv=exportRows().map(row=>row.map(csvCell).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob(['\uFEFF',csv],{type:'text/csv;charset=utf-8;'}));const a=document.createElement('a');a.href=url;a.download=`repoleague-${state.view}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);});
  const hash=new URLSearchParams(location.hash.slice(1));if(hash.has('compare'))openComparison(hash.get('compare').split(','));
 }
 function dateBounds(){

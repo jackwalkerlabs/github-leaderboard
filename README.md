@@ -1,8 +1,8 @@
-# Starboard
+# Repo League
 
 A curated leaderboard of developers and their public, licensed, personally owned GitHub projects. Includes search, language and activity filters, comparisons, CSV export, and developer profiles.
 
-The existing Starboard source was recovered from its connected Sites repository into this initially empty checkout. This implementation adds a Cloudflare Worker, D1-backed profile claims, and Clerk integration. **Changes are local; no production deployment has been made.**
+The original Starboard source was recovered from its connected Sites repository into this initially empty checkout. This implementation adds a Cloudflare Worker, D1-backed profile claims, and Clerk integration. **Changes are local; no production deployment has been made.**
 
 ## Run locally
 
@@ -64,7 +64,7 @@ The ranking and post content refresh at build time after a data refresh. Running
 
 A successful full `npm run data:refresh` also writes `data/history/YYYY-MM-DD.json`. The first complete observation of each UTC day is preserved; subsequent runs update the current snapshot without replacing that day's baseline. Partial failures, stale profiles, or missing immutable IDs cannot become a historical baseline. History is kept outside public build assets. The initial baseline is September 11, 2026.
 
-`.github/workflows/refresh-data.yml` is ready for a daily run at 06:17 UTC and manual **Run workflow**. It uses the runner's installed `gh` and repository `GITHUB_TOKEN`, tests/builds the result, then commits current data, history, and the announcement ledger. When the repository variable `SITE_URL` is configured, it also prepares social drafts (never publishes them). **Private repository:** [jackwalkerlabs/github-leaderboard](https://github.com/jackwalkerlabs/github-leaderboard), with `main` tracking `origin/main`. GitHub reports the refresh workflow as active; its first scheduled run has not yet been verified. Allow the bot to commit data under your branch rules. GitHub schedules can be delayed. This workflow does not deploy the Cloudflare Worker; commits made with `GITHUB_TOKEN` do not trigger ordinary push-based Actions workflows.
+`.github/workflows/refresh-data.yml` is ready for a daily run at 06:17 UTC and manual **Run workflow**. It uses the runner's installed `gh` and repository `GITHUB_TOKEN`, tests/builds the result, then commits current data, history, and the announcement ledger. When the repository variable `SITE_URL` is configured, it also prepares social drafts (never publishes them). **Private repository:** [jackwalkerlabs/github-leaderboard](https://github.com/jackwalkerlabs/github-leaderboard), with `main` tracking `origin/main`. The daily workflow is active, but all five scheduled runs from September 12–16, 2026 were blocked before execution by GitHub account billing/spending limits. Resolve the account billing issue, then run the workflow manually and verify a successful data commit. The schedule alone does not establish fresh data. Allow the bot to commit data under your branch rules. GitHub schedules can be delayed. This workflow does not deploy the Cloudflare Worker; commits made with `GITHUB_TOKEN` do not trigger ordinary push-based Actions workflows.
 
 The competition builder compares matched repository IDs across real observations on UTC dates 7 or 30 days apart and shows actual dates and coverage. Net star-count changes can be negative and do not represent unique users. Missing baselines are never treated as zero. Completed-period reports preserve their historical endpoint cohort. Rank-movement notifications are not implemented.
 
@@ -106,12 +106,12 @@ Development GitHub OAuth is configured and browser-verified. Production Clerk OA
 
 ## Shared design with UseCLIs
 
-Starboard vendors UseCLIs' font, color, typography, spacing, and radius tokens under `dist/design-system/`, including self-hosted Inconsolata and license notices. The layout uses compact ranking rows, neutral cards, dark primary buttons, and green metric accents. Secondary interest, minimum-star, and activity filters live under **More filters**; the summary indicates when any are active. Developer avatars, featured projects, and claiming retain Starboard's focus on people. The token snapshot is portable and does not require the UseCLIs checkout at build time.
+Repo League vendors UseCLIs' font, color, typography, spacing, and radius tokens under `dist/design-system/`, including self-hosted Inconsolata and license notices. The layout uses compact ranking rows, neutral cards, dark primary buttons, and green metric accents. Secondary interest, minimum-star, and activity filters live under **More filters**; the summary indicates when any are active. Developer avatars, featured projects, and claiming retain Repo League's focus on people. The token snapshot is portable and does not require the UseCLIs checkout at build time.
 
 
 ## Indie Page playbook: portfolios → milestones → discovery
 
-Research, scope and acceptance evidence live in [docs/indiepage-playbook.md](docs/indiepage-playbook.md). The adaptation keeps UseCLIs styling and uses GitHub project progress in place of revenue payments. Revenue claims from the video are not forecasts for Starboard.
+Research, scope and acceptance evidence live in [docs/indiepage-playbook.md](docs/indiepage-playbook.md). The adaptation keeps UseCLIs styling and uses GitHub project progress in place of revenue payments. Revenue claims from the video are not forecasts for Repo League.
 
 - `/join/` helps existing builders find their portfolio. Unlisted builders can sign in, connect a verified GitHub account, and request a listing. The Worker resolves the immutable GitHub ID against GitHub's public user API, accepts personal accounts only, and persists one request per GitHub/Clerk identity. Requests are not claims and do not instantly publish a page. Without Clerk configuration, the UI explains that requests are not yet open.
 - Owners can tell their builder story, link their website, and feature up to six eligible projects. Statistics remain read-only. Both database migrations are required.
@@ -147,3 +147,7 @@ npm run build
 The ledger reserves at most three drafts per UTC day and at most one per developer, excludes developers featured or reserved in the preceding seven days, and deduplicates stable milestone/report IDs. Rerunning preparation does not duplicate the day's drafts. Stale snapshots do not produce new spotlights. Prepared items reserve their slot until the cooldown expires; the ledger distinguishes `prepared` from `published`. The command records a URL supplied by the operator; it does not independently verify that X posted it. Changes use a local exclusive lock and atomic file replacement. No X API token, outbound posting call, or automated pinning is present.
 
 Commit the ledger with the snapshot/history so rebuilds and scheduled runs share announcement history. GitHub Actions prepares drafts only when `vars.SITE_URL` is set. The private GitHub remote is configured and the refresh workflow is active. Social draft preparation still requires `vars.SITE_URL`; Cloudflare deployment is not configured. No production posts or outreach were sent during implementation.
+
+## Brand and existing integrations
+
+The public product name is **Repo League** (formerly Starboard), with `repoleague` used for package and download names. The existing Clerk application display name, Cloudflare Worker/D1 names, Sites project association, and GitHub repository keep their original identifiers. Browser storage keys and internal events also remain stable so the rebrand preserves following preferences and claim flows. A production domain has not been selected or configured.
