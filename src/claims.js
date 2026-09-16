@@ -72,6 +72,7 @@ async function renderClaim(developer) {
     return;
   }
   if (turn !== revision) return;
+  slot.dataset.claimed = String(Boolean(profile.claimed));
   const ownedAccount = ownGitHub(developer);
   const featured = (profile.featuredProjects || []).map(name => developer.repos.find(repo => repo.full_name === name)).filter(Boolean);
   slot.innerHTML = `<div class="claim-heading"><span class="eyebrow">${profile.claimed ? 'CLAIMED PROFILE' : 'YOUR WORK, YOUR STORY'}</span>${profile.claimed ? '<span class="claim-badge" title="GitHub account ownership was verified when this profile was claimed.">✓ GitHub account verified</span>' : ''}</div>
