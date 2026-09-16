@@ -39,7 +39,7 @@
   window.addEventListener('storage', event => { if (event.key === storageKey || event.key === null) { readFollowing(); renderFollowing(); } });
 
   const dialog = document.createElement('dialog'); dialog.id = 'share-dialog'; dialog.setAttribute('aria-labelledby', 'share-title');
-  dialog.innerHTML = '<div class="dialog-top"><span class="eyebrow">PUBLIC WORK DESERVES CREDIT</span><button id="close-share" aria-label="Close share preview">✕</button></div><h2 id="share-title">Share a leaderboard update</h2><div id="share-card-preview" class="share-card-preview"><span id="card-scope"></span><strong id="card-rank"></strong><h3 id="card-name"></h3><p id="card-stats"></p><small id="card-date"></small><b>✦ starboard.</b></div><label class="share-text-label" for="share-text">Your post draft</label><textarea id="share-text" rows="5"></textarea><div class="profile-actions"><button class="profile-button claim-primary" id="copy-share">Copy post</button><button class="profile-button" id="download-share">Download PNG card ↓</button><a class="profile-button" id="share-on-x" target="_blank" rel="noopener noreferrer">Open draft on X ↗</a></div><p id="share-preview-note" class="page-note"></p><p id="share-status" role="status"></p>';
+  dialog.innerHTML = '<div class="dialog-top"><span class="eyebrow">PUBLIC WORK DESERVES CREDIT</span><button id="close-share" aria-label="Close share preview">✕</button></div><h2 id="share-title">Share a leaderboard update</h2><div id="share-card-preview" class="share-card-preview"><span id="card-scope"></span><strong id="card-rank"></strong><h3 id="card-name"></h3><p id="card-stats"></p><small id="card-date"></small><b>✦ repo league.</b></div><label class="share-text-label" for="share-text">Your post draft</label><textarea id="share-text" rows="5"></textarea><div class="profile-actions"><button class="profile-button claim-primary" id="copy-share">Copy post</button><button class="profile-button" id="download-share">Download PNG card ↓</button><a class="profile-button" id="share-on-x" target="_blank" rel="noopener noreferrer">Open draft on X ↗</a></div><p id="share-preview-note" class="page-note"></p><p id="share-status" role="status"></p>';
   document.body.appendChild(dialog);
   const input = dialog.querySelector('#share-text');
   const shareStatus = dialog.querySelector('#share-status');
@@ -94,12 +94,12 @@
       text(card.title, 64, 342, 62, '#0b0e10');
       text(card.secondary, 64, 410, 34, '#0b0e10');
       text(card.date, 64, 483, 25, '#657078');
-      text('✦ starboard.', 64, 564, 33, '#0b0e10');
+      text('✦ repo league.', 64, 564, 33, '#0b0e10');
       if (data.origin) text(new URL(data.origin).host + card.path, 365, 564, 21, '#657078', 750);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       if (!blob) throw new Error('Image unavailable');
       const url = URL.createObjectURL(blob), link = document.createElement('a');
-      link.href = url; link.download = `starboard-${card.key}-${card.date.slice(0, 10)}.png`;
+      link.href = url; link.download = `repoleague-${card.key}-${card.date.slice(0, 10)}.png`;
       document.body.appendChild(link); link.click(); link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       shareStatus.textContent = 'PNG card downloaded. Attach it to your post.';

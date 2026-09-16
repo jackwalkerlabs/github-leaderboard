@@ -1,15 +1,15 @@
-# Indie Page's playbook, adapted to Starboard
+# Indie Page's playbook, adapted to Repo League
 
 Sources inspected September 11, 2026:
 
 - [Marc Lou — My SaaS made $2,370 in 2 weeks WITHOUT marketing](https://www.youtube.com/watch?v=DTJatExdQMI). Read the full public English captions; the source title/revenue is the creator's claim, not independently verified.
 - [Indie Page](https://indiepa.ge/), [Marc's public portfolio](https://indiepa.ge/marclou), and [its leaderboard](https://indiepa.ge/leaderboard).
 
-The video explains a product-led distribution loop: a small public tool promotes the core portfolio product (00:47–02:09); user achievements give projects exposure and a reason for their makers to reshare (02:12–03:20); recent-feature history prevents a handful of big accounts monopolizing attention (05:55–06:52); completed weekly/monthly roundups provide recurring stories (06:54–07:54). The launch depended partly on an existing large audience, which the creator explicitly acknowledges (07:57–09:15). Treat this as a design hypothesis for Starboard, not a promise of identical growth.
+The video explains a product-led distribution loop: a small public tool promotes the core portfolio product (00:47–02:09); user achievements give projects exposure and a reason for their makers to reshare (02:12–03:20); recent-feature history prevents a handful of big accounts monopolizing attention (05:55–06:52); completed weekly/monthly roundups provide recurring stories (06:54–07:54). The launch depended partly on an existing large audience, which the creator explicitly acknowledges (07:57–09:15). Treat this as a design hypothesis for Repo League, not a promise of identical growth.
 
 ## Product direction
 
-Starboard gives open-source builders a public home for their work and turns real project progress into discovery. The path is: preview your GitHub portfolio → claim and curate your page → follow progress → share an earned milestone → bring visitors to the project and developer → discover or create another page.
+Repo League gives open-source builders a public home for their work and turns real project progress into discovery. The path is: preview your GitHub portfolio → claim and curate your page → follow progress → share an earned milestone → bring visitors to the project and developer → discover or create another page.
 
 Keep the UseCLIs visual foundations. Adapt Indie Page's behavior and incentives; do not copy its branding, pricing, revenue claims, or UI wholesale. GitHub-sourced statistics and GitHub-account verification must remain separate concepts. Stars indicate attention, not users, code quality, or skill.
 

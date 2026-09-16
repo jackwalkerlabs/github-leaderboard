@@ -4,7 +4,7 @@
 @import './design-system/tokens/spacing.css';
 @import './design-system/tokens/radius.css';
 
-/* UseCLIs foundations; Starboard keeps its own identity and profile layout. */
+/* UseCLIs foundations; Repo League keeps its own identity and profile layout. */
 :root {
   --text-muted: #657078;
   --text-faint: #737d85;
