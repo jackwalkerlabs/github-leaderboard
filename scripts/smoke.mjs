@@ -34,12 +34,21 @@ if (home && !(await home.text()).includes('Repo League')) {
 }
 
 // The deployed snapshot must match the one this run built, not an earlier one.
-const live = await get('/data.json');
-if (live) {
-  const served = await live.json();
-  if (served.fetched_at !== snapshot.fetched_at) {
-    failures.push(`Deployed snapshot is ${served.fetched_at}, expected ${snapshot.fetched_at}.`);
+// Cloudflare's edge can serve the previous asset for a few seconds after a
+// deploy, so poll a cache-busted URL rather than judging on the first answer.
+let served = null;
+for (let attempt = 0; attempt < 10; attempt++) {
+  const response = await fetch(`${base}/data.json?deploy-check=${Date.now()}`, { cache: 'no-store' });
+  if (response.ok) {
+    served = await response.json();
+    if (served.fetched_at === snapshot.fetched_at) break;
   }
+  await new Promise((resolve) => setTimeout(resolve, 6000));
+}
+if (!served) {
+  failures.push('Deployed site never served /data.json.');
+} else if (served.fetched_at !== snapshot.fetched_at) {
+  failures.push(`Deployed snapshot is still ${served.fetched_at} after waiting; expected ${snapshot.fetched_at}.`);
 }
 
 if (failures.length) {
