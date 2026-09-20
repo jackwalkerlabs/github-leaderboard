@@ -82,14 +82,14 @@ class Run(unittest.TestCase):
                 return {}
             return pages.pop(0) if pages else {'items': []}
 
-        def collector(login, fetch=None):
+        def collector(login, graph=None):
             collected.append(login)
-            if fetch:
-                fetch(f'https://api.github.com/users/{login}')
+            if graph:
+                graph({'login': login, 'cursor': None})
             return people.get(login)
 
         state = state or discovery.load_state(pathlib.Path(self.directory.name) / 'missing.json')
-        summary = discovery.run(state, NOW, fetch, collector, CONFIG, self.snapshot)
+        summary = discovery.run(state, NOW, fetch, collector, CONFIG, self.snapshot, graph=lambda variables: {})
         return state, summary, collected
 
     def test_admits_qualifying_people_and_stops_at_the_daily_cap(self):
@@ -133,13 +133,13 @@ class Run(unittest.TestCase):
         def fetch(url):
             return {} if '/search/' not in url else page(*names)
 
-        def collector(login, fetch=None):
+        def collector(login, graph=None):
             collected.append(login)
-            fetch(f'https://api.github.com/users/{login}')
+            graph({'login': login, 'cursor': None})
             return people.get(login)
 
         state = discovery.load_state(pathlib.Path(self.directory.name) / 'missing.json')
-        summary = discovery.run(state, NOW, fetch, collector, config, self.snapshot)
+        summary = discovery.run(state, NOW, fetch, collector, config, self.snapshot, graph=lambda variables: {})
         self.assertTrue(summary['budget_spent'])
         self.assertLess(len(summary['admitted']), config['max_admitted_per_day'])
         self.assertLessEqual(summary['requests'], config['max_api_requests'])

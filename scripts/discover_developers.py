@@ -11,7 +11,7 @@ logins are reconsidered on a schedule instead of being searched repeatedly.
 import datetime, json, os, pathlib, sys, tempfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-from collect_data import get, collect
+from collect_data import get, collect, graphql
 
 STATE = pathlib.Path('data/discovery.json')
 SNAPSHOT = pathlib.Path('dist/data.json')
@@ -113,13 +113,14 @@ def known_logins(snapshot_path=SNAPSHOT):
     return {d['login'].lower() for d in snapshot.get('developers', [])}
 
 
-def run(state, now, fetch=get, collector=collect, config=CONFIG, snapshot_path=SNAPSHOT):
+def run(state, now, fetch=get, collector=collect, config=CONFIG, snapshot_path=SNAPSHOT, graph=graphql):
     known = known_logins(snapshot_path)
     admitted_logins = {entry['login'].lower() for entry in state['admitted']}
     evaluated = state['evaluated']
     admitted, evaluations, skipped, empty_pages = [], 0, 0, 0
     budget = Budget(config['max_api_requests'])
-    counted = budget.counting(fetch)
+    counted = budget.counting(fetch)          # REST, for candidate search
+    counted_graph = budget.counting(graph)    # GraphQL, for evaluating a person
 
     # Stop once every band has come back empty in a row: the search is exhausted
     # for now, and spinning through cursors would only burn API budget.
@@ -140,7 +141,7 @@ def run(state, now, fetch=get, collector=collect, config=CONFIG, snapshot_path=S
                 skipped += 1
                 continue
             evaluations += 1
-            developer = collector(login, counted)
+            developer = collector(login, counted_graph)
             if not developer:  # organizations and deleted accounts
                 evaluated[key] = {'login': login, 'checked_at': now.isoformat(), 'outcome': 'not-a-person'}
                 continue

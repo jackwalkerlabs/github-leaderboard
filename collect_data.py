@@ -14,20 +14,72 @@ def get(url):
     if result.returncode:
         raise RuntimeError('GitHub API request failed for ' + endpoint.split('?')[0] + '; check gh auth status and gh api rate_limit')
     return json.loads(result.stdout)
-def collect(login, fetch=None):
-    # Callers with an API budget to respect pass their own counting fetch.
-    fetch = fetch or get
-    profile=fetch('https://api.github.com/users/'+login)
-    if profile['type']!='User': return None
-    repos=[]; page=1
-    while True:
-        batch=fetch(f'https://api.github.com/users/{login}/repos?per_page=100&type=owner&page={page}')
-        repos.extend(batch)
-        if len(batch)<100: break
-        page+=1
-    eligible=[r for r in repos if not r.get('private', True) and not r['fork'] and r.get('license') and r['license']['spdx_id'] not in ['NOASSERTION','NONE']]
-    eligible.sort(key=lambda r:r['stargazers_count'],reverse=True)
-    result={k:profile.get(k) for k in ['id','login','name','avatar_url','html_url','bio','followers','location']}
+QUERY = """
+query($login: String!, $cursor: String) {
+  user(login: $login) {
+    databaseId login name avatarUrl url bio location
+    followers { totalCount }
+    repositories(first: 100, after: $cursor, ownerAffiliations: OWNER, privacy: PUBLIC, orderBy: {field: STARGAZERS, direction: DESC}) {
+      pageInfo { hasNextPage endCursor }
+      nodes {
+        databaseId name nameWithOwner url description homepageUrl
+        stargazerCount forkCount isFork isArchived pushedAt createdAt
+        primaryLanguage { name }
+        licenseInfo { key name spdxId url }
+        repositoryTopics(first: 25) { nodes { topic { name } } }
+      }
+    }
+  }
+}
+"""
+def graphql(variables):
+    """One request returns a profile and 100 repositories, against GraphQL's
+    own hourly allowance; the REST budget stays free for search."""
+    command = ['gh', 'api', 'graphql', '-f', 'query=' + QUERY]
+    for key, value in variables.items():
+        if value is not None: command += ['-F', f'{key}={value}']
+    result = subprocess.run(command, capture_output=True, text=True, timeout=120)
+    # gh exits non-zero when GraphQL reports errors, so read the body first:
+    # a missing user is an organization or deleted account, not a failure.
+    try:
+        payload = json.loads(result.stdout)
+    except ValueError:
+        payload = None
+    if payload and payload.get('errors'):
+        if any(error.get('type') == 'NOT_FOUND' for error in payload['errors']): return None
+        raise RuntimeError('GitHub GraphQL error for ' + variables.get('login', '?') + ': ' + payload['errors'][0].get('message', 'unknown error'))
+    if result.returncode or not payload:
+        raise RuntimeError('GitHub GraphQL request failed for ' + variables.get('login', '?') + '; check gh auth status and gh api rate_limit')
+    return payload['data']['user']
+def shape(node):
+    """Present a GraphQL repository the way the rest of the project expects."""
+    licence = node.get('licenseInfo') or None
+    return {'id': node['databaseId'], 'name': node['name'], 'full_name': node['nameWithOwner'],
+            'html_url': node['url'], 'description': node['description'],
+            'stargazers_count': node['stargazerCount'], 'forks_count': node['forkCount'],
+            'language': (node.get('primaryLanguage') or {}).get('name'),
+            'archived': node['isArchived'], 'pushed_at': node['pushedAt'], 'created_at': node['createdAt'],
+            'license': licence and {'key': licence['key'], 'name': licence['name'], 'spdx_id': licence['spdxId'],
+                                    'url': 'https://api.github.com/licenses/' + licence['key']},
+            'topics': sorted(entry['topic']['name'] for entry in node['repositoryTopics']['nodes']),
+            'homepage': node['homepageUrl'], 'fork': node['isFork']}
+def collect(login, graph=None):
+    # Callers with an API budget to respect pass their own counting request.
+    graph = graph or graphql
+    profile = graph({'login': login, 'cursor': None})
+    if not profile: return None  # an organization or a deleted account
+    repos=[shape(node) for node in profile['repositories']['nodes']]
+    info=profile['repositories']['pageInfo']
+    while info['hasNextPage']:
+        following=graph({'login': login, 'cursor': info['endCursor']})
+        repos.extend(shape(node) for node in following['repositories']['nodes'])
+        info=following['repositories']['pageInfo']
+    eligible=[r for r in repos if not r['fork'] and r.get('license') and r['license']['spdx_id'] not in ['NOASSERTION','NONE',None]]
+    eligible.sort(key=lambda r:(-r['stargazers_count'], r['full_name']))
+    result={'id':profile['databaseId'],'login':profile['login'],'name':profile['name'],
+            # GraphQL adds a crop hash; keep the stable canonical avatar URL.
+            'avatar_url':profile['avatarUrl'].split('?')[0]+'?v=4','html_url':profile['url'],'bio':profile['bio'] or None,
+            'followers':profile['followers']['totalCount'],'location':profile['location']}
     result['repos']=[{k:r.get(k) for k in ['id','name','full_name','html_url','description','stargazers_count','forks_count','language','archived','pushed_at','license','topics','created_at','homepage']} for r in eligible]
     result['total_stars']=sum(r['stargazers_count'] for r in eligible)
     result['total_forks']=sum(r['forks_count'] for r in eligible)
