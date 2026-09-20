@@ -1,5 +1,9 @@
 import json, subprocess, concurrent.futures, datetime, pathlib, os, tempfile
 USERS=['sindresorhus','antfu','tj','shadcn','steipete','karpathy','jesseduffield','sharkdp','BurntSushi','ggerganov','yyx990803','taylorotwell','mitsuhiko','tiangolo','sebastianbergmann','jakevdp','davidhalter','mrousavy','junegunn','vinta','donnemartin','ThePrimeagen','k0kubun','fogleman','hakimel','wesbos','simonw','mattn','lepture','jgm','rs','jesseduffield','chubin','sxyazi','ajeetdsouza','koalaman','nate-parrott','antonmedv','astral-sh','imsnif','casey','PatrickJS','sampotts','broofa','alecthomas']
+def discovered(path=pathlib.Path('data/discovery.json')):
+    # Admitted developers persist here, so a lost or rebuilt snapshot cannot drop them.
+    if not path.exists(): return []
+    return [entry['login'] for entry in json.loads(path.read_text()).get('admitted', [])]
 def get(url):
     # gh uses the user's existing keychain login; no token is written to the repo.
     endpoint = url.removeprefix('https://api.github.com/')
@@ -76,7 +80,7 @@ if __name__=='__main__':
     results=existing['developers']; errors=[]
     for result in results: result.setdefault('fetched_at',existing.get('fetched_at'))
     retained={d['login'].lower() for d in results}
-    candidates=list(dict.fromkeys(USERS + [d['login'] for d in results]))
+    candidates=list(dict.fromkeys(USERS + discovered() + [d['login'] for d in results]))
     pending=[u for u in candidates if '--refresh' in sys.argv or u.lower() not in retained]
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
         futures={pool.submit(collect,u):u for u in pending}

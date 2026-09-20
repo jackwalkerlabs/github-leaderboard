@@ -1,0 +1,49 @@
+name: Discover developers
+
+on:
+  schedule:
+    - cron: '17 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: developer-discovery
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Evaluate candidates and admit qualifying developers
+        run: python3 scripts/discover_developers.py
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Record admissions and evidence
+        id: commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/discovery.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record developer discovery results'
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # Collect the newly admitted developers so they appear on the live site;
+      # the refresh publishes its data and dispatches the deploy in turn.
+      - name: Collect newly admitted developers
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run refresh-data.yml --ref main
