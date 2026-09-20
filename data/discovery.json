@@ -1,0 +1,72 @@
+{
+ "admitted": [
+  {
+   "added_at": "2026-09-20T01:06:10.434985+00:00",
+   "eligible_repos": 34,
+   "followers": 10227,
+   "latest_push": "2026-03-27T22:36:45Z",
+   "login": "typicode",
+   "total_stars": 159674
+  },
+  {
+   "added_at": "2026-09-20T01:06:10.434985+00:00",
+   "eligible_repos": 72,
+   "followers": 1878,
+   "latest_push": "2026-08-23T13:27:07Z",
+   "login": "MrXujiang",
+   "total_stars": 15830
+  },
+  {
+   "added_at": "2026-09-20T01:06:10.434985+00:00",
+   "eligible_repos": 5,
+   "followers": 12671,
+   "latest_push": "2026-09-19T06:01:20Z",
+   "login": "BYVoid",
+   "total_stars": 10064
+  }
+ ],
+ "cursor": {
+  "band": 0,
+  "page": 2
+ },
+ "evaluated": {
+  "byvoid": {
+   "checked_at": "2026-09-20T01:06:10.434985+00:00",
+   "eligible_repos": 5,
+   "followers": 12671,
+   "latest_push": "2026-09-19T06:01:20Z",
+   "login": "BYVoid",
+   "outcome": "admitted",
+   "total_stars": 10064
+  },
+  "mrxujiang": {
+   "checked_at": "2026-09-20T01:06:10.434985+00:00",
+   "eligible_repos": 72,
+   "followers": 1878,
+   "latest_push": "2026-08-23T13:27:07Z",
+   "login": "MrXujiang",
+   "outcome": "admitted",
+   "total_stars": 15830
+  },
+  "petehunt": {
+   "checked_at": "2026-09-20T01:06:10.434985+00:00",
+   "eligible_repos": 7,
+   "followers": 6072,
+   "latest_push": "2026-07-23T18:47:49Z",
+   "login": "petehunt",
+   "outcome": "rejected",
+   "total_stars": 47
+  },
+  "typicode": {
+   "checked_at": "2026-09-20T01:06:10.434985+00:00",
+   "eligible_repos": 34,
+   "followers": 10227,
+   "latest_push": "2026-03-27T22:36:45Z",
+   "login": "typicode",
+   "outcome": "admitted",
+   "total_stars": 159674
+  }
+ },
+ "last_run_at": "2026-09-20T01:06:10.434985+00:00",
+ "version": 1
+}
