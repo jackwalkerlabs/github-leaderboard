@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "starboard",
+  "name": "repoleague",
   "main": "worker/index.js",
   "compatibility_date": "2026-09-11",
   "compatibility_flags": [
@@ -18,8 +18,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "starboard",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_name": "repoleague",
+      "database_id": "b65f5093-93a1-497d-ab12-8e7aae4e9d66",
       "migrations_dir": "migrations"
     }
   ],
