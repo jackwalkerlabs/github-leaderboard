@@ -1,1 +1,50 @@
-[]
+[
+  {
+    "key": "milestone-1115225085-50",
+    "developerId": 58493,
+    "title": "steipete/canvas",
+    "primary": "★ 50",
+    "secondary": "A project milestone for steipete",
+    "scope": "First crossing observed by Repo League · GitHub stars",
+    "date": "2026-09-16 → 2026-09-20",
+    "path": "/projects/steipete/canvas/",
+    "text": "steipete/canvas passed 50 GitHub stars between Repo League observations on 2026-09-16 and 2026-09-20.\nExplore the project and the work of GitHub builder steipete.\nhttps://repoleague.jackwalkerlabs.workers.dev/projects/steipete/canvas/\nSource: https://github.com/steipete/canvas",
+    "source": "https://github.com/steipete/canvas",
+    "id": "milestone-1115225085-50",
+    "url": "https://repoleague.jackwalkerlabs.workers.dev/projects/steipete/canvas/",
+    "status": "prepared",
+    "preparedAt": "2026-09-20T00:56:50.287Z"
+  },
+  {
+    "key": "milestone-1354304208-100",
+    "developerId": 11247099,
+    "title": "antfu/eslint-plugin-slop",
+    "primary": "★ 100",
+    "secondary": "A project milestone for antfu",
+    "scope": "First crossing observed by Repo League · GitHub stars",
+    "date": "2026-09-16 → 2026-09-20",
+    "path": "/projects/antfu/eslint-plugin-slop/",
+    "text": "antfu/eslint-plugin-slop passed 100 GitHub stars between Repo League observations on 2026-09-16 and 2026-09-20.\nExplore the project and the work of GitHub builder antfu.\nhttps://repoleague.jackwalkerlabs.workers.dev/projects/antfu/eslint-plugin-slop/\nSource: https://github.com/antfu/eslint-plugin-slop",
+    "source": "https://github.com/antfu/eslint-plugin-slop",
+    "id": "milestone-1354304208-100",
+    "url": "https://repoleague.jackwalkerlabs.workers.dev/projects/antfu/eslint-plugin-slop/",
+    "status": "prepared",
+    "preparedAt": "2026-09-20T00:56:50.287Z"
+  },
+  {
+    "key": "profile-10111",
+    "title": "mattn",
+    "primary": "#21",
+    "secondary": "38,696 stars · 127 projects",
+    "scope": "All-time stars · Repo League curated sample (41 developers)",
+    "date": "2026-09-20",
+    "path": "/developers/mattn/",
+    "text": "GitHub builder mattn is #21 by all-time stars in Repo League's curated sample.\n38,696 stars across 127 projects.\nSnapshot: 2026-09-20.\nhttps://repoleague.jackwalkerlabs.workers.dev/developers/mattn/\nSource: https://github.com/mattn",
+    "developerId": 10111,
+    "id": "spotlight-2026-09-20-10111",
+    "source": "https://github.com/mattn",
+    "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/mattn/",
+    "status": "prepared",
+    "preparedAt": "2026-09-20T00:56:50.287Z"
+  }
+]
