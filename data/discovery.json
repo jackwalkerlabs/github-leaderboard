@@ -23,13 +23,55 @@
    "latest_push": "2026-09-19T06:01:20Z",
    "login": "BYVoid",
    "total_stars": 10064
+  },
+  {
+   "added_at": "2026-09-20T12:20:45.346445+00:00",
+   "eligible_repos": 11,
+   "followers": 696,
+   "latest_push": "2026-09-03T07:55:40Z",
+   "login": "darknessomi",
+   "total_stars": 9897
+  },
+  {
+   "added_at": "2026-09-20T12:20:45.346445+00:00",
+   "eligible_repos": 147,
+   "followers": 5080,
+   "latest_push": "2026-09-18T22:39:17Z",
+   "login": "lukeed",
+   "total_stars": 55123
+  },
+  {
+   "added_at": "2026-09-20T12:20:45.346445+00:00",
+   "eligible_repos": 40,
+   "followers": 1724,
+   "latest_push": "2026-09-08T15:50:42Z",
+   "login": "seven332",
+   "total_stars": 10470
   }
  ],
  "cursor": {
   "band": 0,
-  "page": 2
+  "page": 3
  },
  "evaluated": {
+  "adongwanai": {
+   "checked_at": "2026-09-20T12:20:45.346445+00:00",
+   "eligible_repos": 8,
+   "followers": 176,
+   "latest_push": "2026-09-20T06:43:21Z",
+   "login": "adongwanai",
+   "outcome": "rejected",
+   "total_stars": 410
+  },
+  "bobthecow": {
+   "checked_at": "2026-09-20T12:20:45.346445+00:00",
+   "eligible_repos": 19,
+   "followers": 0,
+   "latest_push": "2026-09-10T17:36:21Z",
+   "login": "bobthecow",
+   "outcome": "rejected",
+   "total_stars": 18781
+  },
   "byvoid": {
    "checked_at": "2026-09-20T01:06:10.434985+00:00",
    "eligible_repos": 5,
@@ -38,6 +80,51 @@
    "login": "BYVoid",
    "outcome": "admitted",
    "total_stars": 10064
+  },
+  "darknessomi": {
+   "checked_at": "2026-09-20T12:20:45.346445+00:00",
+   "eligible_repos": 11,
+   "followers": 696,
+   "latest_push": "2026-09-03T07:55:40Z",
+   "login": "darknessomi",
+   "outcome": "admitted",
+   "total_stars": 9897
+  },
+  "dr5hn": {
+   "checked_at": "2026-09-20T12:20:45.346445+00:00",
+   "eligible_repos": 16,
+   "followers": 397,
+   "latest_push": "2026-09-18T09:40:52Z",
+   "login": "dr5hn",
+   "outcome": "near-miss",
+   "total_stars": 9917
+  },
+  "goofychris": {
+   "checked_at": "2026-09-20T12:20:45.346445+00:00",
+   "eligible_repos": 7,
+   "followers": 4,
+   "latest_push": "2026-07-13T02:00:06Z",
+   "login": "goofychris",
+   "outcome": "rejected",
+   "total_stars": 10052
+  },
+  "lukeed": {
+   "checked_at": "2026-09-20T12:20:45.346445+00:00",
+   "eligible_repos": 147,
+   "followers": 5080,
+   "latest_push": "2026-09-18T22:39:17Z",
+   "login": "lukeed",
+   "outcome": "admitted",
+   "total_stars": 55123
+  },
+  "miuuyy": {
+   "checked_at": "2026-09-20T12:20:45.346445+00:00",
+   "eligible_repos": 4,
+   "followers": 124,
+   "latest_push": "2026-09-19T11:38:08Z",
+   "login": "miuuyy",
+   "outcome": "rejected",
+   "total_stars": 10159
   },
   "mrxujiang": {
    "checked_at": "2026-09-20T01:06:10.434985+00:00",
@@ -57,6 +144,24 @@
    "outcome": "rejected",
    "total_stars": 47
   },
+  "seven332": {
+   "checked_at": "2026-09-20T12:20:45.346445+00:00",
+   "eligible_repos": 40,
+   "followers": 1724,
+   "latest_push": "2026-09-08T15:50:42Z",
+   "login": "seven332",
+   "outcome": "admitted",
+   "total_stars": 10470
+  },
+  "timarney": {
+   "checked_at": "2026-09-20T12:20:45.346445+00:00",
+   "eligible_repos": 43,
+   "followers": 374,
+   "latest_push": "2026-09-13T07:17:50Z",
+   "login": "timarney",
+   "outcome": "near-miss",
+   "total_stars": 12157
+  },
   "typicode": {
    "checked_at": "2026-09-20T01:06:10.434985+00:00",
    "eligible_repos": 34,
@@ -67,6 +172,6 @@
    "total_stars": 159674
   }
  },
- "last_run_at": "2026-09-20T01:06:10.434985+00:00",
+ "last_run_at": "2026-09-20T12:20:45.346445+00:00",
  "version": 1
 }
