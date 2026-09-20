@@ -16,16 +16,36 @@ from collect_data import get, collect
 STATE = pathlib.Path('data/discovery.json')
 SNAPSHOT = pathlib.Path('dist/data.json')
 CONFIG = {
-    'min_total_stars': 5000,      # across eligible repositories, not profile totals
-    'min_followers': 500,
+    'min_total_stars': 100,       # across eligible repositories, not profile totals
+    'min_followers': 0,
     'active_within_days': 365,    # at least one eligible repository pushed recently
-    'max_admitted_per_day': 3,
-    'max_evaluations_per_run': 30,
+    'max_admitted_per_day': 50,
+    'max_evaluations_per_run': 250,
+    # GitHub allows an Actions token roughly 1,000 requests an hour, shared with
+    # the refresh this run dispatches; stop well short and resume tomorrow.
+    'max_api_requests': 700,
     'recheck_near_miss_days': 30,  # within half the bar; likely to qualify later
     'recheck_rejected_days': 180,
     'bands': ['stars:5000..9999', 'stars:10000..24999', 'stars:25000..49999', 'stars:>=50000'],
     'pages_per_band': 10,          # GitHub search returns at most 1000 results per query
 }
+
+
+class Budget:
+    """Count every GitHub request so a large run stops cleanly instead of
+    failing halfway through and leaving the day's work unpublished."""
+
+    def __init__(self, limit):
+        self.limit, self.used = limit, 0
+
+    def spent(self):
+        return self.used >= self.limit
+
+    def counting(self, fetch):
+        def counted(url):
+            self.used += 1
+            return fetch(url)
+        return counted
 
 
 def load_state(path=STATE):
@@ -98,16 +118,19 @@ def run(state, now, fetch=get, collector=collect, config=CONFIG, snapshot_path=S
     admitted_logins = {entry['login'].lower() for entry in state['admitted']}
     evaluated = state['evaluated']
     admitted, evaluations, skipped, empty_pages = [], 0, 0, 0
+    budget = Budget(config['max_api_requests'])
+    counted = budget.counting(fetch)
 
     # Stop once every band has come back empty in a row: the search is exhausted
     # for now, and spinning through cursors would only burn API budget.
     while (len(admitted) < config['max_admitted_per_day'] and evaluations < config['max_evaluations_per_run']
-           and empty_pages <= len(config['bands'])):
-        owners, cursor, results = search_owners(state['cursor'], fetch, config)
+           and empty_pages <= len(config['bands']) and not budget.spent()):
+        owners, cursor, results = search_owners(state['cursor'], counted, config)
         state['cursor'] = cursor
         empty_pages = 0 if results else empty_pages + 1
         for login in owners:
-            if evaluations >= config['max_evaluations_per_run'] or len(admitted) >= config['max_admitted_per_day']:
+            if (evaluations >= config['max_evaluations_per_run'] or len(admitted) >= config['max_admitted_per_day']
+                    or budget.spent()):
                 break
             key = login.lower()
             if key in known or key in admitted_logins:
@@ -117,7 +140,7 @@ def run(state, now, fetch=get, collector=collect, config=CONFIG, snapshot_path=S
                 skipped += 1
                 continue
             evaluations += 1
-            developer = collector(login)
+            developer = collector(login, counted)
             if not developer:  # organizations and deleted accounts
                 evaluated[key] = {'login': login, 'checked_at': now.isoformat(), 'outcome': 'not-a-person'}
                 continue
@@ -130,7 +153,8 @@ def run(state, now, fetch=get, collector=collect, config=CONFIG, snapshot_path=S
                 admitted_logins.add(key)
                 admitted.append(entry)
     state['last_run_at'] = now.isoformat()
-    return {'admitted': admitted, 'evaluations': evaluations, 'skipped': skipped}
+    return {'admitted': admitted, 'evaluations': evaluations, 'skipped': skipped,
+            'requests': budget.used, 'budget_spent': budget.spent()}
 
 
 if __name__ == '__main__':
@@ -142,4 +166,7 @@ if __name__ == '__main__':
     else:
         save_state(state)
     names = ', '.join(entry['login'] for entry in summary['admitted']) or 'none'
-    print(f'Evaluated {summary["evaluations"]}, skipped {summary["skipped"]} recently checked. Admitted: {names}')
+    print(f'Evaluated {summary["evaluations"]} using {summary["requests"]} API requests, '
+          f'skipped {summary["skipped"]} recently checked. Admitted {len(summary["admitted"])}: {names}')
+    if summary['budget_spent']:
+        print('Stopped on the API request budget; the cursor resumes here tomorrow.')

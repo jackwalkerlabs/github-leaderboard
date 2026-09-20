@@ -14,12 +14,14 @@ def get(url):
     if result.returncode:
         raise RuntimeError('GitHub API request failed for ' + endpoint.split('?')[0] + '; check gh auth status and gh api rate_limit')
     return json.loads(result.stdout)
-def collect(login):
-    profile=get('https://api.github.com/users/'+login)
+def collect(login, fetch=None):
+    # Callers with an API budget to respect pass their own counting fetch.
+    fetch = fetch or get
+    profile=fetch('https://api.github.com/users/'+login)
     if profile['type']!='User': return None
     repos=[]; page=1
     while True:
-        batch=get(f'https://api.github.com/users/{login}/repos?per_page=100&type=owner&page={page}')
+        batch=fetch(f'https://api.github.com/users/{login}/repos?per_page=100&type=owner&page={page}')
         repos.extend(batch)
         if len(batch)<100: break
         page+=1

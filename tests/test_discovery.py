@@ -4,10 +4,10 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from scripts import discover_developers as discovery
 
 NOW = datetime.datetime(2026, 9, 20, tzinfo=datetime.timezone.utc)
-CONFIG = dict(discovery.CONFIG, max_admitted_per_day=2, max_evaluations_per_run=10)
+CONFIG = dict(discovery.CONFIG, max_admitted_per_day=2, max_evaluations_per_run=10, max_api_requests=500)
 
 
-def person(login, stars, followers=5000, pushed='2026-09-01T00:00:00Z', repos=2):
+def person(login, stars, followers=0, pushed='2026-09-01T00:00:00Z', repos=2):
     return {'login': login, 'followers': followers, 'total_stars': stars,
             'repos': [{'pushed_at': pushed, 'stargazers_count': stars // repos} for _ in range(repos)]}
 
@@ -18,20 +18,24 @@ def page(*logins, kind='User'):
 
 class Assessment(unittest.TestCase):
     def test_clears_every_part_of_the_bar(self):
-        outcome, evidence = discovery.assess(person('ada', 9000), NOW, CONFIG)
+        outcome, evidence = discovery.assess(person('ada', 120), NOW, CONFIG)
         self.assertEqual(outcome, 'admitted')
-        self.assertEqual(evidence['total_stars'], 9000)
+        self.assertEqual(evidence['total_stars'], 120)
 
     def test_popular_but_dormant_work_is_not_admitted(self):
-        outcome, _ = discovery.assess(person('ada', 90000, pushed='2020-01-01T00:00:00Z'), NOW, CONFIG)
+        outcome, _ = discovery.assess(person('ada', 9000, pushed='2020-01-01T00:00:00Z'), NOW, CONFIG)
         self.assertEqual(outcome, 'rejected')
 
-    def test_close_on_both_counts_is_a_near_miss(self):
-        outcome, _ = discovery.assess(person('ada', 3000, followers=400), NOW, CONFIG)
+    def test_just_under_the_bar_is_a_near_miss(self):
+        outcome, _ = discovery.assess(person('ada', 60), NOW, CONFIG)
         self.assertEqual(outcome, 'near-miss')
 
-    def test_followers_alone_do_not_qualify(self):
-        outcome, _ = discovery.assess(person('ada', 100, followers=90000), NOW, CONFIG)
+    def test_followers_are_not_required(self):
+        outcome, _ = discovery.assess(person('ada', 400, followers=0), NOW, CONFIG)
+        self.assertEqual(outcome, 'admitted')
+
+    def test_a_following_cannot_replace_published_work(self):
+        outcome, _ = discovery.assess(person('ada', 5, followers=90000), NOW, CONFIG)
         self.assertEqual(outcome, 'rejected')
 
     def test_developer_without_eligible_repositories_is_rejected(self):
@@ -74,10 +78,14 @@ class Run(unittest.TestCase):
         collected = []
 
         def fetch(url):
+            if '/search/' not in url:  # a counted request from the collector
+                return {}
             return pages.pop(0) if pages else {'items': []}
 
-        def collector(login):
+        def collector(login, fetch=None):
             collected.append(login)
+            if fetch:
+                fetch(f'https://api.github.com/users/{login}')
             return people.get(login)
 
         state = state or discovery.load_state(pathlib.Path(self.directory.name) / 'missing.json')
@@ -86,37 +94,60 @@ class Run(unittest.TestCase):
 
     def test_admits_qualifying_people_and_stops_at_the_daily_cap(self):
         pages = [page('ada', 'bob', 'cleo')]
-        people = {name: person(name, 20000) for name in ['ada', 'bob', 'cleo']}
+        people = {name: person(name, 9000) for name in ['ada', 'bob', 'cleo']}
         state, summary, collected = self.go(pages, people)
         self.assertEqual([entry['login'] for entry in summary['admitted']], ['ada', 'bob'])
         self.assertNotIn('cleo', collected)
 
     def test_developers_already_listed_are_never_re_evaluated(self):
         # The snapshot stores "Sindresorhus"; search returns a different casing.
-        state, summary, collected = self.go([page('sindresorhus', 'ada')], {'ada': person('ada', 20000)})
+        state, summary, collected = self.go([page('sindresorhus', 'ada')], {'ada': person('ada', 9000)})
         self.assertEqual(collected, ['ada'])
 
     def test_organizations_are_recorded_and_not_admitted(self):
-        state, summary, _ = self.go([page('acme-corp'), page('ada')], {'acme-corp': None, 'ada': person('ada', 20000)})
+        state, summary, _ = self.go([page('acme-corp'), page('ada')], {'acme-corp': None, 'ada': person('ada', 9000)})
         self.assertEqual(state['evaluated']['acme-corp']['outcome'], 'not-a-person')
         self.assertEqual([entry['login'] for entry in summary['admitted']], ['ada'])
 
     def test_recently_rejected_logins_are_skipped_without_an_api_call(self):
         state = discovery.load_state(pathlib.Path(self.directory.name) / 'missing.json')
         state['evaluated']['bob'] = {'login': 'bob', 'checked_at': NOW.isoformat(), 'outcome': 'rejected'}
-        _, summary, collected = self.go([page('bob', 'ada')], {'ada': person('ada', 20000)}, state)
+        _, summary, collected = self.go([page('bob', 'ada')], {'ada': person('ada', 9000)}, state)
         self.assertNotIn('bob', collected)
         self.assertEqual(summary['skipped'], 1)
 
     def test_evaluation_budget_bounds_a_barren_search(self):
         pages = [page(*[f'user{index}' for index in range(100)])]
-        people = {f'user{index}': person(f'user{index}', 10) for index in range(100)}
+        people = {f'user{index}': person(f'user{index}', 2) for index in range(100)}
         _, summary, collected = self.go(pages, people)
         self.assertEqual(summary['evaluations'], CONFIG['max_evaluations_per_run'])
         self.assertEqual(len(collected), CONFIG['max_evaluations_per_run'])
 
+    def test_api_budget_stops_the_run_before_the_daily_cap(self):
+        # Each candidate costs one counted request in this fake collector.
+        config = dict(CONFIG, max_admitted_per_day=50, max_evaluations_per_run=50, max_api_requests=4)
+        names = [f'user{index}' for index in range(50)]
+        people = {name: person(name, 9000) for name in names}
+        collected = []
+
+        def fetch(url):
+            return {} if '/search/' not in url else page(*names)
+
+        def collector(login, fetch=None):
+            collected.append(login)
+            fetch(f'https://api.github.com/users/{login}')
+            return people.get(login)
+
+        state = discovery.load_state(pathlib.Path(self.directory.name) / 'missing.json')
+        summary = discovery.run(state, NOW, fetch, collector, config, self.snapshot)
+        self.assertTrue(summary['budget_spent'])
+        self.assertLess(len(summary['admitted']), config['max_admitted_per_day'])
+        self.assertLessEqual(summary['requests'], config['max_api_requests'])
+        # The cursor advanced, so tomorrow's run continues rather than repeating.
+        self.assertNotEqual(state['cursor'], {'band': 0, 'page': 1})
+
     def test_admissions_and_evidence_survive_a_save_and_reload(self):
-        state, _, _ = self.go([page('ada')], {'ada': person('ada', 20000)})
+        state, _, _ = self.go([page('ada')], {'ada': person('ada', 9000)})
         path = pathlib.Path(self.directory.name) / 'discovery.json'
         discovery.save_state(state, path)
         reloaded = discovery.load_state(path)
