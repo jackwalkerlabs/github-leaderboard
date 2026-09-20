@@ -19,13 +19,11 @@ async function get(path, { expect = 200 } = {}) {
 
 const snapshot = JSON.parse(await readFile(new URL('../dist/data.json', import.meta.url), 'utf8'));
 const developer = snapshot.developers[0]?.login;
-const project = snapshot.developers[0]?.repos?.[0]?.full_name;
 
-for (const path of ['/', '/developers/', '/milestones/', '/join/', '/trending/week/', '/robots.txt', '/sitemap.xml']) {
+for (const path of ['/', '/developers/', '/projects/', '/languages/', '/milestones/', '/join/', '/trending/week/', '/robots.txt', '/sitemap.xml']) {
   await get(path);
 }
-if (developer) await get(`/developers/${developer}/`);
-if (project) await get(`/projects/${project}/`);
+if (developer) await get(`/developers/${developer.toLowerCase()}/`);
 await get('/this-page-does-not-exist/', { expect: 404 });
 
 const home = await get('/');
