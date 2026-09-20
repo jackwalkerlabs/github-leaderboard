@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: github-snapshot
@@ -40,6 +41,7 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
       - name: Save refreshed data
+        id: commit
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -47,3 +49,12 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git commit -m 'Refresh GitHub snapshot and daily history'
           git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # GITHUB_TOKEN pushes do not trigger push workflows, so publish the new
+      # snapshot by explicitly running the same pipeline a human push would.
+      - name: Validate and deploy the refreshed snapshot
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref main
