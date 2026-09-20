@@ -32,7 +32,7 @@ export function milestoneEvents(history, snapshot) {
           events.push({ id: `milestone-${repo.id}-${threshold}`, developerId: developer.id, login: owner.login,
             repoId: repo.id, project: currentRepo.full_name, threshold, stars: repo.stargazers_count,
             from: last.observedAt, to: observation.observed_at,
-            path: `/projects/${currentRepo.full_name.toLowerCase().split('/').map(encodeURIComponent).join('/')}/`,
+            path: `/developers/${encodeURIComponent(owner.login.toLowerCase())}/`,
             developerPath: `/developers/${encodeURIComponent(owner.login.toLowerCase())}/`,
             source: `https://github.com/${currentRepo.full_name}` });
         }

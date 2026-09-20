@@ -4,7 +4,7 @@ import { mkdtemp, readFile, rm, access } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { JSDOM } from 'jsdom';
-import { generateSite, developerPath, projectPath, languageSlug, siteOrigin } from '../scripts/site.mjs';
+import { generateSite, developerPath, languageSlug, siteOrigin } from '../scripts/site.mjs';
 
 const template = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
 const observed = '2026-09-11T16:00:00+00:00';
@@ -87,11 +87,12 @@ test('profile and language totals reflect the actual matching repositories; unsa
   assert.match(d.querySelector('.projects').textContent, /<img src=x/);
   assert.equal(d.querySelector('[onerror]'), null);
   assert.equal(d.querySelectorAll('.projects .project').length, 18);
+  // Projects are listed, not given their own page; their links leave for GitHub.
+  const card = d.querySelector('.projects .project .project-top a');
+  assert.match(card.getAttribute('href'), /^https:\/\/github\.com\/Alice\/Tool-/);
+  assert.equal(card.getAttribute('rel'), 'noopener noreferrer');
   profile.window.close();
-  const project = new JSDOM(await read('/projects/alice/tool-0/'));
-  assert.equal(project.window.document.querySelector('a[href^="javascript:"]'), null);
-  assert.match(project.window.document.querySelector('main').textContent, /100/);
-  project.window.close();
+  await assert.rejects(read('/projects/alice/tool-0/'));
   const language = new JSDOM(await read('/languages/rust/'));
   assert.equal(language.window.document.querySelectorAll('.projects .project').length, 24);
   assert.equal(language.window.document.querySelectorAll('.compact-projects a').length, 27);
@@ -113,7 +114,10 @@ test('completed report and milestone pages include real standings, source paths 
   const milestones = new JSDOM(await read('/milestones/'));
   assert.equal(milestones.window.document.querySelector('meta[name=robots]').content, 'index,follow');
   assert.equal(milestones.window.document.querySelectorAll('.story-grid article').length, 3);
-  assert.equal(milestones.window.document.querySelector('.story-grid a').getAttribute('href'), '/projects/alice/tool-0/');
+  assert.equal(milestones.window.document.querySelector('.story-grid a').getAttribute('href'), 'https://github.com/Alice/Tool-0');
+  // Shares build their URL from this path, so it must stay on the site.
+  const milestoneCard = JSON.parse(milestones.window.document.getElementById('engagement-data').textContent).cards.find(c => c.key.startsWith('milestone-'));
+  assert.equal(milestoneCard.path, '/developers/alice/');
   milestones.window.close();
 });
 
@@ -131,7 +135,6 @@ test('previews and missing pages are noindex; canonical origin configuration is 
   assert.throws(() => siteOrigin('https://starboard.example/preview'));
   assert.throws(() => siteOrigin('https://user:password@starboard.example'));
   assert.equal(developerPath('BurntSushi'), '/developers/burntsushi/');
-  assert.equal(projectPath('Alice/Tool'), '/projects/alice/tool/');
   assert.notEqual(languageSlug('C++'), languageSlug('C#'));
 });
 
