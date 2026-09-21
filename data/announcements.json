@@ -46,5 +46,53 @@
     "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/mattn/",
     "status": "prepared",
     "preparedAt": "2026-09-20T00:56:50.287Z"
+  },
+  {
+    "key": "milestone-850495932-100",
+    "developerId": 1945,
+    "title": "casey/filepack",
+    "primary": "★ 100",
+    "secondary": "A project milestone for casey",
+    "scope": "First crossing observed by Repo League · GitHub stars",
+    "date": "2026-09-20 → 2026-09-21",
+    "path": "/developers/casey/",
+    "text": "casey/filepack passed 100 GitHub stars between Repo League observations on 2026-09-20 and 2026-09-21.\nExplore the project and the work of GitHub builder casey.\nhttps://repoleague.jackwalkerlabs.workers.dev/developers/casey/\nSource: https://github.com/casey/filepack",
+    "source": "https://github.com/casey/filepack",
+    "id": "milestone-850495932-100",
+    "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/casey/",
+    "status": "prepared",
+    "preparedAt": "2026-09-21T12:54:31.467Z"
+  },
+  {
+    "key": "profile-1016365",
+    "title": "PatrickJS",
+    "primary": "#14",
+    "secondary": "66,418 stars · 147 projects",
+    "scope": "All-time stars · Repo League curated sample (97 developers)",
+    "date": "2026-09-21",
+    "path": "/developers/patrickjs/",
+    "text": "GitHub builder PatrickJS is #14 by all-time stars in Repo League's curated sample.\n66,418 stars across 147 projects.\nSnapshot: 2026-09-21.\nhttps://repoleague.jackwalkerlabs.workers.dev/developers/patrickjs/\nSource: https://github.com/PatrickJS",
+    "developerId": 1016365,
+    "id": "spotlight-2026-09-21-1016365",
+    "source": "https://github.com/PatrickJS",
+    "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/patrickjs/",
+    "status": "prepared",
+    "preparedAt": "2026-09-21T12:54:31.467Z"
+  },
+  {
+    "key": "profile-1017620",
+    "title": "BartoszJarocki",
+    "primary": "#63",
+    "secondary": "10,051 stars · 11 projects",
+    "scope": "All-time stars · Repo League curated sample (97 developers)",
+    "date": "2026-09-21",
+    "path": "/developers/bartoszjarocki/",
+    "text": "GitHub builder BartoszJarocki is #63 by all-time stars in Repo League's curated sample.\n10,051 stars across 11 projects.\nSnapshot: 2026-09-21.\nhttps://repoleague.jackwalkerlabs.workers.dev/developers/bartoszjarocki/\nSource: https://github.com/BartoszJarocki",
+    "developerId": 1017620,
+    "id": "spotlight-2026-09-21-1017620",
+    "source": "https://github.com/BartoszJarocki",
+    "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/bartoszjarocki/",
+    "status": "prepared",
+    "preparedAt": "2026-09-21T12:54:31.467Z"
   }
 ]
