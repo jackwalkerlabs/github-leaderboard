@@ -94,5 +94,53 @@
     "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/bartoszjarocki/",
     "status": "prepared",
     "preparedAt": "2026-09-21T12:54:31.467Z"
+  },
+  {
+    "key": "milestone-776621-10000",
+    "developerId": 245270,
+    "title": "BYVoid/OpenCC",
+    "primary": "★ 10,000",
+    "secondary": "A project milestone for BYVoid",
+    "scope": "First crossing observed by Repo League · GitHub stars",
+    "date": "2026-09-21 → 2026-09-22",
+    "path": "/developers/byvoid/",
+    "text": "BYVoid/OpenCC passed 10,000 GitHub stars between Repo League observations on 2026-09-21 and 2026-09-22.\nExplore the project and the work of GitHub builder BYVoid.\nhttps://repoleague.jackwalkerlabs.workers.dev/developers/byvoid/\nSource: https://github.com/BYVoid/OpenCC",
+    "source": "https://github.com/BYVoid/OpenCC",
+    "id": "milestone-776621-10000",
+    "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/byvoid/",
+    "status": "prepared",
+    "preparedAt": "2026-09-22T11:44:54.725Z"
+  },
+  {
+    "key": "profile-10084443",
+    "title": "sjzar",
+    "primary": "#142",
+    "secondary": "444 stars · 5 projects",
+    "scope": "All-time stars · Repo League curated sample (147 developers)",
+    "date": "2026-09-22",
+    "path": "/developers/sjzar/",
+    "text": "GitHub builder sjzar is #142 by all-time stars in Repo League's curated sample.\n444 stars across 5 projects.\nSnapshot: 2026-09-22.\nhttps://repoleague.jackwalkerlabs.workers.dev/developers/sjzar/\nSource: https://github.com/sjzar",
+    "developerId": 10084443,
+    "id": "spotlight-2026-09-22-10084443",
+    "source": "https://github.com/sjzar",
+    "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/sjzar/",
+    "status": "prepared",
+    "preparedAt": "2026-09-22T11:44:54.725Z"
+  },
+  {
+    "key": "profile-1014357",
+    "title": "AdrienTorris",
+    "primary": "#117",
+    "secondary": "9,375 stars · 1 projects",
+    "scope": "All-time stars · Repo League curated sample (147 developers)",
+    "date": "2026-09-22",
+    "path": "/developers/adrientorris/",
+    "text": "GitHub builder AdrienTorris is #117 by all-time stars in Repo League's curated sample.\n9,375 stars across 1 projects.\nSnapshot: 2026-09-22.\nhttps://repoleague.jackwalkerlabs.workers.dev/developers/adrientorris/\nSource: https://github.com/AdrienTorris",
+    "developerId": 1014357,
+    "id": "spotlight-2026-09-22-1014357",
+    "source": "https://github.com/AdrienTorris",
+    "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/adrientorris/",
+    "status": "prepared",
+    "preparedAt": "2026-09-22T11:44:54.725Z"
   }
 ]
