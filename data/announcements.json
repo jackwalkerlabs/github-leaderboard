@@ -142,5 +142,53 @@
     "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/adrientorris/",
     "status": "prepared",
     "preparedAt": "2026-09-22T11:44:54.725Z"
+  },
+  {
+    "key": "milestone-1378684398-10",
+    "developerId": 9599,
+    "title": "simonw/llm-keys-ui",
+    "primary": "★ 10",
+    "secondary": "A project milestone for simonw",
+    "scope": "First crossing observed by Repo League · GitHub stars",
+    "date": "2026-09-22 → 2026-09-23",
+    "path": "/developers/simonw/",
+    "text": "simonw/llm-keys-ui passed 10 GitHub stars between Repo League observations on 2026-09-22 and 2026-09-23.\nExplore the project and the work of GitHub builder simonw.\nhttps://repoleague.jackwalkerlabs.workers.dev/developers/simonw/\nSource: https://github.com/simonw/llm-keys-ui",
+    "source": "https://github.com/simonw/llm-keys-ui",
+    "id": "milestone-1378684398-10",
+    "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/simonw/",
+    "status": "prepared",
+    "preparedAt": "2026-09-23T11:44:29.712Z"
+  },
+  {
+    "key": "milestone-748851374-50",
+    "developerId": 1150639,
+    "title": "wonderwhy-er/ChatGPTServerCommander",
+    "primary": "★ 50",
+    "secondary": "A project milestone for wonderwhy-er",
+    "scope": "First crossing observed by Repo League · GitHub stars",
+    "date": "2026-09-22 → 2026-09-23",
+    "path": "/developers/wonderwhy-er/",
+    "text": "wonderwhy-er/ChatGPTServerCommander passed 50 GitHub stars between Repo League observations on 2026-09-22 and 2026-09-23.\nExplore the project and the work of GitHub builder wonderwhy-er.\nhttps://repoleague.jackwalkerlabs.workers.dev/developers/wonderwhy-er/\nSource: https://github.com/wonderwhy-er/ChatGPTServerCommander",
+    "source": "https://github.com/wonderwhy-er/ChatGPTServerCommander",
+    "id": "milestone-748851374-50",
+    "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/wonderwhy-er/",
+    "status": "prepared",
+    "preparedAt": "2026-09-23T11:44:29.712Z"
+  },
+  {
+    "key": "profile-10349437",
+    "title": "bregman-arie",
+    "primary": "#180",
+    "secondary": "4,487 stars · 22 projects",
+    "scope": "All-time stars · Repo League curated sample (197 developers)",
+    "date": "2026-09-23",
+    "path": "/developers/bregman-arie/",
+    "text": "GitHub builder bregman-arie is #180 by all-time stars in Repo League's curated sample.\n4,487 stars across 22 projects.\nSnapshot: 2026-09-23.\nhttps://repoleague.jackwalkerlabs.workers.dev/developers/bregman-arie/\nSource: https://github.com/bregman-arie",
+    "developerId": 10349437,
+    "id": "spotlight-2026-09-23-10349437",
+    "source": "https://github.com/bregman-arie",
+    "url": "https://repoleague.jackwalkerlabs.workers.dev/developers/bregman-arie/",
+    "status": "prepared",
+    "preparedAt": "2026-09-23T11:44:29.712Z"
   }
 ]
